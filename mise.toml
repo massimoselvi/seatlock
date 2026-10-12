@@ -1,0 +1,7 @@
+[tools]
+python = "3.13"
+node = "22"
+pnpm = "latest"
+
+[env]
+_.python.venv = { path = ".venv", create = true }
