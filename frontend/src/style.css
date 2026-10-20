@@ -1,0 +1,10 @@
+:root { font-family: system-ui, sans-serif; color: #1f2430; }
+body { margin: 0; background: #f6f7f9; }
+main { max-width: 760px; margin: 0 auto; padding: 2rem 1rem; }
+.lead { color: #5b6270; }
+.cards { list-style: none; padding: 0; display: grid; gap: 1rem; }
+.cards li { background: #fff; border-radius: 10px; padding: 1rem 1.25rem; box-shadow: 0 1px 3px #0001; }
+.cards h2 { margin: 0 0 .25rem; font-size: 1.1rem; }
+.seats { margin: .5rem 0 0; font-weight: 600; color: #1a7f4b; }
+.seats.full { color: #b42318; }
+.error { color: #b42318; }
