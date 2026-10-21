@@ -13,7 +13,16 @@ class Config:
     db_backup_days: int
     protect_data: bool
     alarm_email: str | None = None
-    image_tag: str = "latest"
+    bootstrap: bool = False
+
+    @property
+    def web_desired(self) -> int:
+        """First deploy only: the ECR repository must exist and hold an image before tasks start."""
+        return 0 if self.bootstrap else self.web_count
+
+    @property
+    def worker_desired(self) -> int:
+        return 0 if self.bootstrap else 1
 
     @property
     def tasks_in_public_subnets(self) -> bool:
