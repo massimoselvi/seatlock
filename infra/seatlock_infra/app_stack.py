@@ -52,6 +52,8 @@ class AppStack(Stack):
             "DEBUG": "false",
             # The ALB health check calls the task by IP, so host filtering happens at the edge.
             "ALLOWED_HOSTS": "*",
+            # Client IP is the second address from the right: viewer, then the CloudFront edge.
+            "NUM_PROXIES": "2",
             "DB_HOST": data.database.db_instance_endpoint_address,
             "DB_NAME": DB_NAME,
             "DB_USER": DB_USER,
