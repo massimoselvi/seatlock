@@ -9,12 +9,14 @@ import {
   type Workshop,
 } from './api'
 import AuthPanel from './components/AuthPanel.vue'
+import OrganizerDashboard from './components/OrganizerDashboard.vue'
 import { logOut, restoreSession, session } from './session'
 
 const workshops = ref<Workshop[]>([])
 const registrations = ref<Registration[]>([])
 const error = ref<string | null>(null)
 const pending = ref<number | null>(null)
+const view = ref<'workshops' | 'organizer'>('workshops')
 
 const activeByWorkshop = computed(() => {
   const map = new Map<number, Registration>()
@@ -56,7 +58,10 @@ onMounted(async () => {
   await restoreSession()
   await load()
 })
-watch(() => session.user, load)
+watch(() => session.user, (user) => {
+  if (!user?.is_staff) view.value = 'workshops'
+  load()
+})
 </script>
 
 <template>
@@ -65,6 +70,13 @@ watch(() => session.user, load)
       <h1>Seatlock</h1>
       <div v-if="session.user" class="who">
         {{ session.user.username }}
+        <button
+          v-if="session.user.is_staff"
+          class="link"
+          @click="view = view === 'organizer' ? 'workshops' : 'organizer'"
+        >
+          {{ view === 'organizer' ? 'Workshops' : 'Organizer dashboard' }}
+        </button>
         <button class="link" @click="logOut">Log out</button>
       </div>
     </header>
@@ -72,6 +84,8 @@ watch(() => session.user, load)
 
     <AuthPanel v-if="session.ready && !session.user" />
 
+    <OrganizerDashboard v-if="view === 'organizer' && session.user?.is_staff" />
+    <template v-else>
     <p v-if="error" class="error" role="alert">{{ error }}</p>
     <ul class="cards">
       <li v-for="w in workshops" :key="w.id">
@@ -97,5 +111,6 @@ watch(() => session.user, load)
         </template>
       </li>
     </ul>
+    </template>
   </main>
 </template>
