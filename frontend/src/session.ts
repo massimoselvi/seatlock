@@ -1,7 +1,8 @@
-import { reactive } from 'vue'
+import type { User } from './types'
+import { shallowReactive } from 'vue'
 import * as api from './api'
 
-export const session = reactive<{ user: api.User | null, ready: boolean }>({
+export const session = shallowReactive<{ user: User | null, ready: boolean }>({
   user: null,
   ready: false,
 })

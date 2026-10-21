@@ -1,22 +1,18 @@
 <script setup lang="ts">
-import type { Registration, Workshop } from './api'
-import { computed, onMounted, ref, watch } from 'vue'
-import {
-  cancel,
-  fetchMyRegistrations,
-  fetchWorkshops,
-  register,
-
-} from './api'
+import type { Registration, Workshop } from './types'
+import { computed, onMounted, shallowRef, watch } from 'vue'
+import { cancel, fetchMyRegistrations, fetchWorkshops, register } from './api'
 import AuthPanel from './components/AuthPanel.vue'
 import OrganizerDashboard from './components/OrganizerDashboard.vue'
+import WorkshopCard from './components/WorkshopCard.vue'
 import { logOut, restoreSession, session } from './session'
+import { describeError } from './utils'
 
-const workshops = ref<Workshop[]>([])
-const registrations = ref<Registration[]>([])
-const error = ref<string | null>(null)
-const pending = ref<number | null>(null)
-const view = ref<'workshops' | 'organizer'>('workshops')
+const workshops = shallowRef<Workshop[]>([])
+const registrations = shallowRef<Registration[]>([])
+const error = shallowRef<string | null>(null)
+const pending = shallowRef<number | null>(null)
+const view = shallowRef<'workshops' | 'organizer'>('workshops')
 
 const activeByWorkshop = computed(() => {
   const map = new Map<number, Registration>()
@@ -26,10 +22,6 @@ const activeByWorkshop = computed(() => {
   }
   return map
 })
-
-function describe(e: unknown): string {
-  return e instanceof Error ? e.message : 'Something went wrong'
-}
 
 async function load() {
   try {
@@ -41,7 +33,7 @@ async function load() {
     registrations.value = mine
   }
   catch (e) {
-    error.value = describe(e)
+    error.value = describeError(e)
   }
 }
 
@@ -53,7 +45,7 @@ async function act(workshopId: number, run: () => Promise<unknown>) {
     await load()
   }
   catch (e) {
-    error.value = describe(e)
+    error.value = describeError(e)
   }
   finally {
     pending.value = null
@@ -101,28 +93,16 @@ watch(() => session.user, (user) => {
         {{ error }}
       </p>
       <ul class="cards">
-        <li v-for="w in workshops" :key="w.id">
-          <h2>{{ w.title }}</h2>
-          <time :datetime="w.starts_at">{{ new Date(w.starts_at).toLocaleString() }}</time>
-          <p class="seats" :class="{ full: w.seats_left === 0 }">
-            {{ w.seats_left === 0 ? 'Full - join the waitlist' : `${w.seats_left} of ${w.capacity} seats left` }}
-          </p>
-          <template v-if="session.user">
-            <p v-if="activeByWorkshop.get(w.id)" class="badge" :class="activeByWorkshop.get(w.id)!.status">
-              {{ activeByWorkshop.get(w.id)!.status === 'confirmed' ? 'You have a seat' : 'You are on the waitlist' }}
-            </p>
-            <button
-              v-if="activeByWorkshop.get(w.id)"
-              :disabled="pending === w.id"
-              @click="act(w.id, () => cancel(activeByWorkshop.get(w.id)!.id))"
-            >
-              Cancel
-            </button>
-            <button v-else :disabled="pending === w.id" @click="act(w.id, () => register(w.id))">
-              {{ w.seats_left === 0 ? 'Join waitlist' : 'Register' }}
-            </button>
-          </template>
-        </li>
+        <WorkshopCard
+          v-for="w in workshops"
+          :key="w.id"
+          :workshop="w"
+          :registration="activeByWorkshop.get(w.id)"
+          :signed-in="!!session.user"
+          :pending="pending === w.id"
+          @register="act(w.id, () => register(w.id))"
+          @cancel="act(w.id, () => cancel(activeByWorkshop.get(w.id)!.id))"
+        />
       </ul>
     </template>
   </main>
