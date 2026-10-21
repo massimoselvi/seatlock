@@ -52,6 +52,8 @@ class AppStack(Stack):
             "DEBUG": "false",
             # The ALB health check calls the task by IP, so host filtering happens at the edge.
             "ALLOWED_HOSTS": "*",
+            # Flip to "true" with the HTTPS listener from issue #47. Until then the ALB hop is HTTP.
+            "FORCE_HTTPS": "false",
             "DB_HOST": data.database.db_instance_endpoint_address,
             "DB_NAME": DB_NAME,
             "DB_USER": DB_USER,
