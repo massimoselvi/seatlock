@@ -4,6 +4,7 @@ import { computed, onMounted, shallowRef, watch } from 'vue'
 import { cancel, fetchMyRegistrations, fetchWorkshops, register } from './api'
 import AuthPanel from './components/AuthPanel.vue'
 import OrganizerDashboard from './components/OrganizerDashboard.vue'
+import ThemeToggle from './components/ThemeToggle.vue'
 import WorkshopCard from './components/WorkshopCard.vue'
 import { logOut, restoreSession, session } from './session'
 import { describeError } from './utils'
@@ -75,19 +76,22 @@ watch(() => session.user, (user) => {
         <span class="i-lucide-armchair text-primary" aria-hidden="true" />
         Seatlock
       </h1>
-      <div v-if="session.user" class="text-muted flex gap-4 items-center">
-        <span>{{ session.user.username }}</span>
-        <button
-          v-if="session.user.is_staff"
-          class="btn-link"
-          @click="view = view === 'organizer' ? 'workshops' : 'organizer'"
-        >
-          {{ view === 'organizer' ? 'Workshops' : 'Organizer dashboard' }}
-        </button>
-        <button class="btn-link" @click="logOut">
-          <span class="i-lucide-log-out mr-1" aria-hidden="true" />
-          Log out
-        </button>
+      <div class="flex gap-4 items-center">
+        <template v-if="session.user">
+          <span class="text-muted">{{ session.user.username }}</span>
+          <button
+            v-if="session.user.is_staff"
+            class="btn-link"
+            @click="view = view === 'organizer' ? 'workshops' : 'organizer'"
+          >
+            {{ view === 'organizer' ? 'Workshops' : 'Organizer dashboard' }}
+          </button>
+          <button class="btn-link" @click="logOut">
+            <span class="i-lucide-log-out mr-1" aria-hidden="true" />
+            Log out
+          </button>
+        </template>
+        <ThemeToggle />
       </div>
     </header>
     <p class="text-muted mb-6 mt-2">
