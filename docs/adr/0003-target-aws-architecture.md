@@ -67,20 +67,20 @@ flowchart LR
 | Redis down | Cache and throttle fail, tasks wait | Replica, graceful fallback on cache errors |
 | Bad deploy | Errors rise | Rolling deploy with circuit breaker, rollback to the previous task definition |
 
-## Estimated monthly cost
+## Monthly cost
 
-Rough list prices for `eu-west-1`, on demand, USD. These are estimates for planning. Check them with the AWS Pricing Calculator before committing.
+Details, assumptions and sources: [cost analysis](../cost-analysis.md). Prices are `eu-west-1`, on demand, USD, from the AWS Price List API (2026-10-20).
 
-| Item | Demo (single AZ) | Production-like |
-|------|------------------|-----------------|
-| Fargate: 2 web tasks (0.5 vCPU, 1 GB) + 1 worker (0.25 vCPU, 0.5 GB) | 45 | 45 |
-| RDS PostgreSQL `db.t4g.micro`, 20 GB | 15 | 30 (Multi-AZ) |
-| ElastiCache `cache.t4g.micro` | 12 | 24 (with replica) |
-| Application Load Balancer | 20 | 20 |
-| NAT gateway | 0 (tasks in public subnets) | 35 |
-| CloudFront, S3, ECR, Secrets Manager | 5 | 5 |
-| CloudWatch logs and alarms | 5 | 10 |
-| **Total** | **about 100** | **about 170** |
+| Setup | Low traffic | Expected | High |
+|-------|-------------|----------|------|
+| Demo (1 AZ, no NAT) | 113 | 116 | 177 |
+| Demo lean (1 web task, ARM) | 86 | 89 | 150 |
+| Production-like (Multi-AZ, NAT, Redis replica) | 169 | 172 | 234 |
 
-The demo column trades safety for cost: tasks sit in public subnets with tight security groups and the database is single AZ.
+- About 95% of the cost is fixed at expected traffic. CloudFront's free tier covers the first 10 million requests a month. The high case (40 million) adds about 65.
+- Public IPv4 addresses cost 0.005 a hour each. They are 16% of the demo bill. The first version of this table left them out.
+- A NAT gateway (38.69 a month) is cheaper than the four VPC endpoints that would replace it (64.24).
+- WAF adds about 10 a month at expected traffic.
+
+The demo trades safety for cost: tasks sit in public subnets with tight security groups and the database is single AZ.
 Do not run the demo setup with real user data.
