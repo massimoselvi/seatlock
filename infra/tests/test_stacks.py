@@ -115,3 +115,27 @@ def test_site_bucket_is_private_and_api_is_routed_to_the_load_balancer(demo):
             )
         },
     )
+
+
+def test_outputs_needed_by_the_deploy_guide_exist(demo):
+    needed = {
+        "network": {"AppSecurityGroupId", "TaskSubnetIds"},
+        "app": {
+            "RepositoryUri",
+            "ClusterName",
+            "WebServiceName",
+            "WorkerServiceName",
+            "WebTaskFamily",
+        },
+        "frontend": {"BucketName", "DistributionId", "SiteUrl"},
+    }
+    for stack, names in needed.items():
+        assert names <= set(demo[stack].to_json()["Outputs"])
+
+
+def test_bootstrap_starts_no_tasks_until_an_image_exists():
+    from dataclasses import replace
+
+    template = synth(replace(DEMO, bootstrap=True))["app"]
+    services = template.find_resources("AWS::ECS::Service")
+    assert {s["Properties"]["DesiredCount"] for s in services.values()} == {0}

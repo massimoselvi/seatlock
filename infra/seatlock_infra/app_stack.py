@@ -1,4 +1,4 @@
-from aws_cdk import Duration, RemovalPolicy, Stack
+from aws_cdk import CfnOutput, Duration, RemovalPolicy, Stack
 from aws_cdk import aws_cloudwatch as cloudwatch
 from aws_cdk import aws_cloudwatch_actions as cw_actions
 from aws_cdk import aws_ec2 as ec2
@@ -77,9 +77,11 @@ class AppStack(Stack):
         )
 
         self.web_service = self._service(
-            "WebService", cluster, web, network, config, desired=config.web_count
+            "WebService", cluster, web, network, config, desired=config.web_desired
         )
-        self._service("WorkerService", cluster, worker, network, config, desired=1)
+        worker_service = self._service(
+            "WorkerService", cluster, worker, network, config, desired=config.worker_desired
+        )
 
         self.alb = elbv2.ApplicationLoadBalancer(
             self,
@@ -100,6 +102,13 @@ class AppStack(Stack):
         )
 
         self._alarms(config, data, target_group)
+
+        # Used by docs/deploy.md so the release steps need no console lookups.
+        CfnOutput(self, "RepositoryUri", value=self.repository.repository_uri)
+        CfnOutput(self, "ClusterName", value=cluster.cluster_name)
+        CfnOutput(self, "WebServiceName", value=self.web_service.service_name)
+        CfnOutput(self, "WorkerServiceName", value=worker_service.service_name)
+        CfnOutput(self, "WebTaskFamily", value=web.family)
 
     def _task(self, name, *, cpu, memory, command, env, secrets, port=None):
         task = ecs.FargateTaskDefinition(self, f"{name}Task", cpu=cpu, memory_limit_mib=memory)

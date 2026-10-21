@@ -1,4 +1,4 @@
-from aws_cdk import RemovalPolicy, Stack
+from aws_cdk import CfnOutput, RemovalPolicy, Stack
 from aws_cdk import aws_cloudfront as cloudfront
 from aws_cdk import aws_cloudfront_origins as origins
 from aws_cdk import aws_elasticloadbalancingv2 as elbv2
@@ -60,3 +60,7 @@ class FrontendStack(Stack):
                 for status in (403, 404)
             ],
         )
+
+        CfnOutput(self, "BucketName", value=self.bucket.bucket_name)
+        CfnOutput(self, "DistributionId", value=self.distribution.distribution_id)
+        CfnOutput(self, "SiteUrl", value=f"https://{self.distribution.distribution_domain_name}")
