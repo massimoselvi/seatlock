@@ -132,3 +132,6 @@ if FORCE_HTTPS:
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     # Preloading is hard to undo and needs an owned domain. Decide that on purpose, later.
     SILENCED_SYSTEM_CHECKS = ["security.W021"]
+
+# The Django admin is for local use. Production turns it off (and the ALB blocks /admin too).
+ADMIN_ENABLED = env.bool("ADMIN_ENABLED", default=True)
