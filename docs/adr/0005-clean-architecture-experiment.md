@@ -82,11 +82,11 @@ Two pieces are worth keeping even if the rest is dropped:
 1. **The `UnitOfWork` port with the in-memory fake.** It encodes the lock and after-commit rules and makes them cheap to test.
 2. **The architecture test.** It costs one file and prevents drift.
 
-A middle path: keep the current `workshops` app, move only the seat rules into plain entities and use cases, and keep Django models and views where they are. That would keep most of the testing benefit with much less new code. It would be worth trying as `exp/clean-arch-5-lite`.
+A middle path: keep the current `workshops` app, move only the seat rules into plain entities and use cases, and keep Django models and views where they are. That would keep most of the testing benefit with much less new code. It would be worth trying as `xp/clean-arch-lite`.
 
 If the project grows a second delivery channel (a CLI, an admin import, a websocket) or the rules grow a lot, the full layering pays off. Revisit then.
 
-## The lite variant (`exp/clean-arch-5-lite`)
+## The lite variant (`xp/clean-arch-lite`)
 
 Cut from `main`, not stacked on the others. It keeps the `workshops` app, the Django models, the views and the ORM calls in `services.py`. The only change: the seat **decisions** move into `workshops/rules.py`, plain functions with standard-library imports only. `services.py` loads rows, calls the rules, saves, and keeps all locking and transactions.
 
