@@ -57,3 +57,20 @@ def test_cache_is_not_invalidated_on_rollback(workshop, user):
         services.register(user=user, workshop_id=9999)
     Workshop.objects.create(title="Another", starts_at=timezone.now(), capacity=1)
     assert client.get("/api/workshops/").json()["count"] == 1
+
+
+def test_unknown_query_parameters_share_one_cache_entry(workshop, django_assert_num_queries):
+    client = APIClient()
+    client.get("/api/workshops/?x=1")
+
+    with django_assert_num_queries(0):
+        client.get("/api/workshops/?x=2&y=three")
+        client.get("/api/workshops/")
+        client.get("/api/workshops/?page=1")
+
+
+def test_invalid_page_is_not_cached_and_answers_normally(workshop):
+    client = APIClient()
+    assert client.get("/api/workshops/?page=abc").status_code == 404
+    assert client.get("/api/workshops/?page=999999").status_code == 404
+    assert client.get("/api/workshops/?page=-1").status_code == 404
