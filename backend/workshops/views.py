@@ -4,6 +4,7 @@ from django.db.models import Count, Q
 from django.http import JsonResponse
 from rest_framework import generics, mixins, permissions, status, viewsets
 from rest_framework.authtoken.models import Token
+from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
@@ -134,3 +135,10 @@ class LogoutView(APIView):
     def post(self, request):
         Token.objects.filter(user=request.user).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class LoginView(ObtainAuthToken):
+    """DRF's own view switches throttling off, which leaves passwords open to guessing."""
+
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "login"
