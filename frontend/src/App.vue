@@ -71,7 +71,7 @@ watch(() => session.user, (user) => {
 
 <template>
   <main class="mx-auto px-4 py-8 max-w-3xl">
-    <header class="flex gap-4 items-center justify-between">
+    <header class="flex flex-wrap gap-4 items-center justify-between">
       <h1 class="text-2xl font-700 m-0 flex gap-2 items-center">
         <span class="i-lucide-armchair text-primary" aria-hidden="true" />
         Seatlock
