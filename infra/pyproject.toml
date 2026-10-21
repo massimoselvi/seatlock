@@ -1,0 +1,28 @@
+[project]
+name = "seatlock-infra"
+version = "0.1.0"
+description = "AWS CDK stacks for Seatlock (see docs/adr/0003 and 0004)"
+requires-python = ">=3.13"
+dependencies = [
+    "aws-cdk-lib>=2.274.0",
+    "constructs>=10.8.1",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "ruff>=0.17.1",
+]
+
+[tool.pytest.ini_options]
+python_files = ["test_*.py"]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-ra"
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]

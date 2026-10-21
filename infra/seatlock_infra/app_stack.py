@@ -1,0 +1,196 @@
+from aws_cdk import Duration, RemovalPolicy, Stack
+from aws_cdk import aws_cloudwatch as cloudwatch
+from aws_cdk import aws_cloudwatch_actions as cw_actions
+from aws_cdk import aws_ec2 as ec2
+from aws_cdk import aws_ecr as ecr
+from aws_cdk import aws_ecs as ecs
+from aws_cdk import aws_elasticloadbalancingv2 as elbv2
+from aws_cdk import aws_logs as logs
+from aws_cdk import aws_sns as sns
+from aws_cdk import aws_sns_subscriptions as subscriptions
+from constructs import Construct
+
+from .config import Config
+from .data_stack import DB_NAME, DB_USER, DataStack
+from .network_stack import NetworkStack
+
+# Migrations are not run here. Several tasks starting together must not race on them.
+# They run once per release as a one-off task (see docs/deploy.md).
+WEB_COMMAND = "exec gunicorn config.wsgi --bind 0.0.0.0:8000 --workers 2 --access-logfile -"
+WORKER_COMMAND = "exec celery -A config worker --loglevel=info"
+
+
+class AppStack(Stack):
+    """ECR, the ECS cluster, web and worker services, the ALB and the alarms from docs/slo.md."""
+
+    def __init__(
+        self,
+        scope: Construct,
+        id: str,
+        *,
+        config: Config,
+        network: NetworkStack,
+        data: DataStack,
+        **kwargs,
+    ) -> None:
+        super().__init__(scope, id, **kwargs)
+        removal = RemovalPolicy.RETAIN if config.protect_data else RemovalPolicy.DESTROY
+
+        self.repository = ecr.Repository(
+            self,
+            "Backend",
+            repository_name="seatlock-backend",
+            image_scan_on_push=True,
+            removal_policy=removal,
+            empty_on_delete=not config.protect_data,
+            lifecycle_rules=[ecr.LifecycleRule(max_image_count=20)],
+        )
+        cluster = ecs.Cluster(self, "Cluster", vpc=network.vpc)
+
+        redis_host = data.redis_endpoint
+        environment = {
+            "DEBUG": "false",
+            # The ALB health check calls the task by IP, so host filtering happens at the edge.
+            "ALLOWED_HOSTS": "*",
+            "DB_HOST": data.database.db_instance_endpoint_address,
+            "DB_NAME": DB_NAME,
+            "DB_USER": DB_USER,
+            "CELERY_BROKER_URL": f"rediss://{redis_host}:6379/0?ssl_cert_reqs=required",
+            "CACHE_URL": f"rediss://{redis_host}:6379/1",
+        }
+        secrets = {
+            "SECRET_KEY": ecs.Secret.from_secrets_manager(data.django_secret),
+            "DB_PASSWORD": ecs.Secret.from_secrets_manager(data.db_secret, "password"),
+        }
+
+        web = self._task(
+            "Web",
+            cpu=512,
+            memory=1024,
+            command=WEB_COMMAND,
+            env=environment,
+            secrets=secrets,
+            port=8000,
+        )
+        worker = self._task(
+            "Worker", cpu=256, memory=512, command=WORKER_COMMAND, env=environment, secrets=secrets
+        )
+
+        self.web_service = self._service(
+            "WebService", cluster, web, network, config, desired=config.web_count
+        )
+        self._service("WorkerService", cluster, worker, network, config, desired=1)
+
+        self.alb = elbv2.ApplicationLoadBalancer(
+            self,
+            "Alb",
+            vpc=network.vpc,
+            internet_facing=True,
+            security_group=network.alb_sg,
+            vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PUBLIC),
+        )
+        listener = self.alb.add_listener("Http", port=80, open=False)
+        target_group = listener.add_targets(
+            "Web",
+            port=8000,
+            protocol=elbv2.ApplicationProtocol.HTTP,
+            targets=[self.web_service],
+            health_check=elbv2.HealthCheck(path="/api/health/", healthy_http_codes="200"),
+            deregistration_delay=Duration.seconds(30),
+        )
+
+        self._alarms(config, data, target_group)
+
+    def _task(self, name, *, cpu, memory, command, env, secrets, port=None):
+        task = ecs.FargateTaskDefinition(self, f"{name}Task", cpu=cpu, memory_limit_mib=memory)
+        # DATABASE_URL is built at start-up so the password never sits in the task definition.
+        script = (
+            "export DATABASE_URL=postgres://$DB_USER:$DB_PASSWORD@$DB_HOST:5432/$DB_NAME && "
+            + command
+        )
+        container = task.add_container(
+            name.lower(),
+            image=ecs.ContainerImage.from_ecr_repository(self.repository, tag=self._tag),
+            command=["sh", "-c", script],
+            environment=env,
+            secrets=secrets,
+            logging=ecs.LogDrivers.aws_logs(
+                stream_prefix=name.lower(), log_retention=logs.RetentionDays.ONE_MONTH
+            ),
+        )
+        if port:
+            container.add_port_mappings(ecs.PortMapping(container_port=port))
+        return task
+
+    @property
+    def _tag(self) -> str:
+        return self.node.try_get_context("image_tag") or "latest"
+
+    def _service(self, name, cluster, task, network, config, *, desired):
+        return ecs.FargateService(
+            self,
+            name,
+            cluster=cluster,
+            task_definition=task,
+            desired_count=desired,
+            security_groups=[network.app_sg],
+            vpc_subnets=network.task_subnets,
+            assign_public_ip=config.tasks_in_public_subnets,
+            circuit_breaker=ecs.DeploymentCircuitBreaker(rollback=True),
+            min_healthy_percent=100,
+            max_healthy_percent=200,
+        )
+
+    def _alarms(self, config, data, target_group):
+        topic = sns.Topic(self, "Alarms")
+        if config.alarm_email:
+            topic.add_subscription(subscriptions.EmailSubscription(config.alarm_email))
+        action = cw_actions.SnsAction(topic)
+
+        errors = cloudwatch.MathExpression(
+            expression="IF(requests > 0, 100 * errors / requests, 0)",
+            using_metrics={
+                "errors": self.alb.metrics.http_code_target(
+                    elbv2.HttpCodeTarget.TARGET_5XX_COUNT, statistic="Sum"
+                ),
+                "requests": self.alb.metrics.request_count(statistic="Sum"),
+            },
+            period=Duration.minutes(5),
+        )
+        self._alarm("HighErrorRate", errors, 2, "5xx above 2% for 5 minutes", action)
+
+        latency = target_group.metrics.target_response_time(
+            statistic="p95", period=Duration.minutes(5)
+        )
+        self._alarm(
+            "SlowRequests", latency, 0.8, "p95 above 800 ms for 10 minutes", action, periods=2
+        )
+
+        db_cpu = data.database.metric_cpu_utilization(period=Duration.minutes(5))
+        self._alarm(
+            "DatabaseCpu", db_cpu, 80, "Database CPU above 80% for 10 minutes", action, periods=2
+        )
+
+        unhealthy = target_group.metrics.unhealthy_host_count(period=Duration.minutes(1))
+        self._alarm(
+            "UnhealthyWebTasks",
+            unhealthy,
+            1,
+            "A web task is unhealthy",
+            action,
+            periods=3,
+            operator=cloudwatch.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
+        )
+
+    def _alarm(self, id, metric, threshold, description, action, *, periods=1, operator=None):
+        alarm = cloudwatch.Alarm(
+            self,
+            id,
+            metric=metric,
+            threshold=threshold,
+            evaluation_periods=periods,
+            comparison_operator=operator or cloudwatch.ComparisonOperator.GREATER_THAN_THRESHOLD,
+            treat_missing_data=cloudwatch.TreatMissingData.NOT_BREACHING,
+            alarm_description=description,
+        )
+        alarm.add_alarm_action(action)
