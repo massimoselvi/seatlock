@@ -1,14 +1,19 @@
 from pathlib import Path
 
 import environ
+from django.core.exceptions import ImproperlyConfigured
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 env = environ.Env(DEBUG=(bool, False))
 environ.Env.read_env(BASE_DIR.parent / ".env")
 
-SECRET_KEY = env("SECRET_KEY", default="dev-insecure-change-me")
+INSECURE_DEV_KEY = "dev-insecure-change-me"
 DEBUG = env("DEBUG")
+SECRET_KEY = env("SECRET_KEY", default=INSECURE_DEV_KEY)
+if not DEBUG and SECRET_KEY == INSECURE_DEV_KEY:
+    # Fail closed: a task that lost its secret must not start with a public key.
+    raise ImproperlyConfigured("SECRET_KEY must be set when DEBUG is off.")
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["localhost", "127.0.0.1", "web"])
 
 INSTALLED_APPS = [
@@ -107,3 +112,19 @@ CELERY_TASK_ALWAYS_EAGER = env.bool("CELERY_TASK_ALWAYS_EAGER", default=False)
 
 EMAIL_BACKEND = env("EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend")
 DEFAULT_FROM_EMAIL = "Seatlock <noreply@seatlock.local>"
+
+# Production hardening. Cookies are only used by the admin, but they must never travel over HTTP.
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
+
+# Turn on once every hop to the app carries HTTPS. Behind CloudFront and an HTTP-only ALB the
+# proxy header always says "http", so enabling this too early causes a redirect loop (issue #47).
+FORCE_HTTPS = env.bool("FORCE_HTTPS", default=False)
+if FORCE_HTTPS:
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    SECURE_SSL_REDIRECT = True
+    SECURE_REDIRECT_EXEMPT = [r"^api/health/$"]  # the ALB health check speaks plain HTTP
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    # Preloading is hard to undo and needs an owned domain. Decide that on purpose, later.
+    SILENCED_SYSTEM_CHECKS = ["security.W021"]
