@@ -1,13 +1,20 @@
 from django.db.models import Count, Q
 from django.http import JsonResponse
-from rest_framework import mixins, permissions, status, viewsets
+from rest_framework import generics, mixins, permissions, status, viewsets
+from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from . import services
 from .models import Registration, Workshop
-from .serializers import RegistrationSerializer, WorkshopSerializer
+from .serializers import (
+    RegistrationSerializer,
+    SignupSerializer,
+    UserSerializer,
+    WorkshopSerializer,
+)
 
 
 def health(request):
@@ -46,3 +53,34 @@ class RegistrationViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
         except Registration.DoesNotExist:
             raise NotFound("Registration not found.") from None
         return Response(RegistrationSerializer(registration).data)
+
+
+class SignupView(generics.CreateAPIView):
+    serializer_class = SignupSerializer
+    permission_classes = [permissions.AllowAny]
+    authentication_classes: list = []
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        token, _ = Token.objects.get_or_create(user=user)
+        return Response(
+            {"token": token.key, "user": UserSerializer(user).data},
+            status=status.HTTP_201_CREATED,
+        )
+
+
+class MeView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        return Response(UserSerializer(request.user).data)
+
+
+class LogoutView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        Token.objects.filter(user=request.user).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
