@@ -1,35 +1,19 @@
 from django.conf import settings
 from django.core.cache import cache
-from django.http import JsonResponse
-from rest_framework import generics, mixins, permissions, status, viewsets
-from rest_framework.authtoken.models import Token
-from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework import mixins, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
-from rest_framework.views import APIView
 
 from domain.workshops.exceptions import RegistrationNotFound, WorkshopNotFound
 from infrastructure import container
 from infrastructure.cache import workshop_list as workshop_cache
 from infrastructure.db import models, queries
 
-from .serializers import (
-    OrganizerRegistrationSerializer,
-    OrganizerWorkshopSerializer,
-    RegistrationResultSerializer,
-    RegistrationSerializer,
-    SignupSerializer,
-    UserSerializer,
-    WorkshopSerializer,
-)
+from .serializers import RegistrationResultSerializer, RegistrationSerializer, WorkshopSerializer
 
 MAX_CACHED_PAGE = 1000
-
-
-def health(request):
-    return JsonResponse({"status": "ok"})
 
 
 class WorkshopViewSet(viewsets.ReadOnlyModelViewSet):
@@ -68,20 +52,6 @@ class WorkshopViewSet(viewsets.ReadOnlyModelViewSet):
         return Response(RegistrationResultSerializer(result).data, status=status.HTTP_200_OK)
 
 
-class OrganizerWorkshopViewSet(viewsets.ReadOnlyModelViewSet):
-    """Staff-only view: seats taken, waitlist size and who is registered."""
-
-    serializer_class = OrganizerWorkshopSerializer
-    permission_classes = [permissions.IsAdminUser]
-    queryset = queries.organizer_workshops()
-
-    @action(detail=True, methods=["get"])
-    def registrations(self, request, pk=None):
-        workshop = self.get_object()
-        rows = workshop.registrations.select_related("user").order_by("created_at", "id")
-        return Response(OrganizerRegistrationSerializer(rows, many=True).data)
-
-
 class RegistrationViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     throttle_scope = None
     serializer_class = RegistrationSerializer
@@ -104,43 +74,3 @@ class RegistrationViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
         except RegistrationNotFound:
             raise NotFound("Registration not found.") from None
         return Response(RegistrationResultSerializer(result).data)
-
-
-class SignupView(generics.CreateAPIView):
-    throttle_classes = [ScopedRateThrottle]
-    throttle_scope = "auth"
-    serializer_class = SignupSerializer
-    permission_classes = [permissions.AllowAny]
-    authentication_classes: list = []
-
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = serializer.save()
-        token, _ = Token.objects.get_or_create(user=user)
-        return Response(
-            {"token": token.key, "user": UserSerializer(user).data},
-            status=status.HTTP_201_CREATED,
-        )
-
-
-class MeView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get(self, request):
-        return Response(UserSerializer(request.user).data)
-
-
-class LogoutView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
-
-    def post(self, request):
-        Token.objects.filter(user=request.user).delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-class LoginView(ObtainAuthToken):
-    """DRF's own view switches throttling off, which leaves passwords open to guessing."""
-
-    throttle_classes = [ScopedRateThrottle]
-    throttle_scope = "login"
