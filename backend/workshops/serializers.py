@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Workshop
+from .models import Registration, Workshop
 
 
 class WorkshopSerializer(serializers.ModelSerializer):
@@ -21,3 +21,12 @@ class WorkshopSerializer(serializers.ModelSerializer):
 
     def get_seats_left(self, obj: Workshop) -> int:
         return max(obj.capacity - obj.seats_taken, 0)
+
+
+class RegistrationSerializer(serializers.ModelSerializer):
+    workshop_title = serializers.CharField(source="workshop.title", read_only=True)
+
+    class Meta:
+        model = Registration
+        fields = ["id", "workshop", "workshop_title", "status", "created_at"]
+        read_only_fields = fields
