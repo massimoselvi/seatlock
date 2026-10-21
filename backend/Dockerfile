@@ -15,4 +15,10 @@ RUN uv sync --frozen --no-install-project
 
 COPY . .
 
+# Run as an unprivileged user. Caches go to /tmp so a read-only or bind-mounted /app still works.
+RUN useradd --system --uid 10001 --no-create-home --shell /usr/sbin/nologin app
+ENV RUFF_CACHE_DIR=/tmp/.ruff_cache \
+    PYTEST_ADDOPTS="-o cache_dir=/tmp/.pytest_cache"
+USER app
+
 CMD ["gunicorn", "config.wsgi", "--bind", "0.0.0.0:8000"]
