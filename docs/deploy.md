@@ -4,6 +4,7 @@ How to ship Seatlock to AWS and how to undo a release.
 Architecture: [ADR 0003](adr/0003-target-aws-architecture.md). Infrastructure code: [infra/](../infra/README.md).
 
 > Nothing in this guide has been run against a real AWS account yet. Treat the first deploy as a dry run in a throwaway account and fix the guide with what you learn.
+> A one-day demo run costs about 3 ([cost analysis](cost-analysis.md)). Destroy it afterwards.
 
 ## Prerequisites
 
@@ -166,7 +167,8 @@ aws rds restore-db-instance-to-point-in-time \
 - **Alarms:** email goes to the address passed as `alarm_email`. Confirm the SNS subscription once.
 - **Shell access:** use `aws ecs run-task` with a command override, as in step 2. Do not open ports to the database.
 - **Staff users:** run `python manage.py shell` as a one-off task and set `is_staff=True`, then use the organizer dashboard.
-- **Cost control (demo):** scale to zero when idle, or destroy it.
+- **Cost control (demo):** the demo costs about 0.12 to 0.16 an hour while it exists. Destroy it between sessions. Scaling tasks to zero saves only about 56 of the 113 a month. See the [cost analysis](cost-analysis.md).
+- **Budget:** create an AWS Budgets alarm at 200 a month before the first deploy.
 
 ```bash
 aws ecs update-service --cluster "$CLUSTER" --service "$(out Seatlock-$ENVNAME-App WebServiceName)" --desired-count 0
