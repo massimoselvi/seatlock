@@ -27,7 +27,7 @@ class RegisterForWorkshop:
 
             existing = self.uow.registrations.find_active(workshop.id, user_id)
             if existing:
-                return RegistrationResult.from_entity(existing)
+                return RegistrationResult.from_entity(existing, workshop.title)
 
             confirmed = self.uow.registrations.count_confirmed(workshop.id)
             registration = self.uow.registrations.add(
@@ -38,7 +38,7 @@ class RegisterForWorkshop:
                 )
             )
             self.uow.on_commit(self.list_cache.invalidate)
-            return RegistrationResult.from_entity(registration)
+            return RegistrationResult.from_entity(registration, workshop.title)
 
 
 class CancelRegistration:
@@ -62,14 +62,14 @@ class CancelRegistration:
             registration = self.uow.registrations.get_for_user(registration_id, user_id)
 
             if registration.is_cancelled:
-                return RegistrationResult.from_entity(registration)
+                return RegistrationResult.from_entity(registration, workshop.title)
 
             freed_seat = registration.cancel()
             self.uow.registrations.save(registration)
             self.uow.on_commit(self.list_cache.invalidate)
             if freed_seat:
                 self.uow.on_commit(lambda: self.promotion_queue.enqueue(workshop.id))
-            return RegistrationResult.from_entity(registration)
+            return RegistrationResult.from_entity(registration, workshop.title)
 
 
 class PromoteWaitlist:

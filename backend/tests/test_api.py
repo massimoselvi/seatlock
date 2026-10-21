@@ -1,7 +1,7 @@
 import pytest
 from django.utils import timezone
 
-from workshops.models import Workshop
+from infrastructure.db.models import Workshop
 
 
 def test_health(client):

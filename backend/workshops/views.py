@@ -1,6 +1,5 @@
 from django.conf import settings
 from django.core.cache import cache
-from django.db.models import Count, Q
 from django.http import JsonResponse
 from rest_framework import generics, mixins, permissions, status, viewsets
 from rest_framework.authtoken.models import Token
@@ -11,12 +10,15 @@ from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
-from . import cache as workshop_cache
-from . import services
-from .models import Registration, Workshop
+from domain.workshops.exceptions import RegistrationNotFound, WorkshopNotFound
+from infrastructure import container
+from infrastructure.cache import workshop_list as workshop_cache
+from infrastructure.db import models, queries
+
 from .serializers import (
     OrganizerRegistrationSerializer,
     OrganizerWorkshopSerializer,
+    RegistrationResultSerializer,
     RegistrationSerializer,
     SignupSerializer,
     UserSerializer,
@@ -33,12 +35,7 @@ def health(request):
 class WorkshopViewSet(viewsets.ReadOnlyModelViewSet):
     throttle_scope = None  # per-action kwargs must exist as class attributes
     serializer_class = WorkshopSerializer
-    queryset = Workshop.objects.annotate(
-        seats_taken=Count(
-            "registrations",
-            filter=Q(registrations__status=Registration.Status.CONFIRMED),
-        )
-    ).order_by("starts_at", "id")
+    queryset = queries.workshops_with_seats()
 
     def list(self, request, *args, **kwargs):
         # Only the page number may vary the cache key. Any other query parameter is ignored,
@@ -63,10 +60,12 @@ class WorkshopViewSet(viewsets.ReadOnlyModelViewSet):
     )
     def register(self, request, pk=None):
         try:
-            registration = services.register(user=request.user, workshop_id=int(pk))
-        except Workshop.DoesNotExist:
+            result = container.register_for_workshop().execute(
+                user_id=request.user.pk, workshop_id=int(pk)
+            )
+        except WorkshopNotFound:
             raise NotFound("Workshop not found.") from None
-        return Response(RegistrationSerializer(registration).data, status=status.HTTP_200_OK)
+        return Response(RegistrationResultSerializer(result).data, status=status.HTTP_200_OK)
 
 
 class OrganizerWorkshopViewSet(viewsets.ReadOnlyModelViewSet):
@@ -74,14 +73,7 @@ class OrganizerWorkshopViewSet(viewsets.ReadOnlyModelViewSet):
 
     serializer_class = OrganizerWorkshopSerializer
     permission_classes = [permissions.IsAdminUser]
-    queryset = Workshop.objects.annotate(
-        seats_taken=Count(
-            "registrations", filter=Q(registrations__status=Registration.Status.CONFIRMED)
-        ),
-        waitlist_size=Count(
-            "registrations", filter=Q(registrations__status=Registration.Status.WAITLISTED)
-        ),
-    ).order_by("starts_at", "id")
+    queryset = queries.organizer_workshops()
 
     @action(detail=True, methods=["get"])
     def registrations(self, request, pk=None):
@@ -96,7 +88,7 @@ class RegistrationViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return Registration.objects.filter(user=self.request.user).select_related("workshop")
+        return models.Registration.objects.filter(user=self.request.user).select_related("workshop")
 
     @action(
         detail=True,
@@ -106,10 +98,12 @@ class RegistrationViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     )
     def cancel(self, request, pk=None):
         try:
-            registration = services.cancel(user=request.user, registration_id=int(pk))
-        except Registration.DoesNotExist:
+            result = container.cancel_registration().execute(
+                user_id=request.user.pk, registration_id=int(pk)
+            )
+        except RegistrationNotFound:
             raise NotFound("Registration not found.") from None
-        return Response(RegistrationSerializer(registration).data)
+        return Response(RegistrationResultSerializer(result).data)
 
 
 class SignupView(generics.CreateAPIView):

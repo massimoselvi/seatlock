@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 
-from .models import Registration, Workshop
+from infrastructure.db.models import Registration, Workshop
 
 
 class WorkshopSerializer(serializers.ModelSerializer):
@@ -79,3 +79,13 @@ class OrganizerRegistrationSerializer(serializers.ModelSerializer):
         model = Registration
         fields = ["id", "username", "email", "status", "created_at"]
         read_only_fields = fields
+
+
+class RegistrationResultSerializer(serializers.Serializer):
+    """Shapes the DTO a use case returns. Same JSON as RegistrationSerializer."""
+
+    id = serializers.IntegerField()
+    workshop = serializers.IntegerField(source="workshop_id")
+    workshop_title = serializers.CharField()
+    status = serializers.CharField()
+    created_at = serializers.DateTimeField()

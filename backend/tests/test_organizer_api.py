@@ -3,8 +3,8 @@ from django.contrib.auth import get_user_model
 from django.utils import timezone
 from rest_framework.test import APIClient
 
-from workshops import services
-from workshops.models import Workshop
+from infrastructure import container
+from infrastructure.db.models import Workshop
 
 User = get_user_model()
 pytestmark = pytest.mark.django_db
@@ -25,7 +25,7 @@ def client_for(username: str, *, staff: bool = False) -> APIClient:
 def register_users(workshop, *names):
     for name in names:
         user = User.objects.create_user(name, f"{name}@example.com", "pw")
-        services.register(user=user, workshop_id=workshop.pk)
+        container.register_for_workshop().execute(user_id=user.pk, workshop_id=workshop.pk)
 
 
 def test_dashboard_is_staff_only(workshop):

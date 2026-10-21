@@ -1,3 +1,5 @@
+"""Integration tests: real use cases, real repositories, real PostgreSQL."""
+
 from concurrent.futures import ThreadPoolExecutor
 
 import pytest
@@ -5,8 +7,8 @@ from django.contrib.auth import get_user_model
 from django.db import connection
 from django.utils import timezone
 
-from workshops import services
-from workshops.models import Registration, Workshop
+from infrastructure import container
+from infrastructure.db.models import Registration, Workshop
 
 Status = Registration.Status
 User = get_user_model()
@@ -22,6 +24,10 @@ def make_users(n: int):
     return [User.objects.create_user(f"u{i}", f"u{i}@example.com", "pw") for i in range(n)]
 
 
+def register(user, workshop):
+    return container.register_for_workshop().execute(user_id=user.pk, workshop_id=workshop.pk)
+
+
 def count(workshop: Workshop, status: str) -> int:
     return workshop.registrations.filter(status=status).count()
 
@@ -29,7 +35,7 @@ def count(workshop: Workshop, status: str) -> int:
 @pytest.mark.django_db
 def test_seats_fill_then_waitlist():
     workshop = make_workshop(capacity=2)
-    statuses = [services.register(user=u, workshop_id=workshop.pk).status for u in make_users(3)]
+    statuses = [register(u, workshop).status for u in make_users(3)]
     assert statuses == [Status.CONFIRMED, Status.CONFIRMED, Status.WAITLISTED]
 
 
@@ -37,9 +43,9 @@ def test_seats_fill_then_waitlist():
 def test_register_is_idempotent():
     workshop = make_workshop(capacity=1)
     (user,) = make_users(1)
-    first = services.register(user=user, workshop_id=workshop.pk)
-    second = services.register(user=user, workshop_id=workshop.pk)
-    assert first.pk == second.pk
+    first = register(user, workshop)
+    second = register(user, workshop)
+    assert first.id == second.id
     assert workshop.registrations.count() == 1
 
 
@@ -47,12 +53,12 @@ def test_register_is_idempotent():
 def test_cancel_promotes_oldest_waitlisted(django_capture_on_commit_callbacks, mailoutbox):
     workshop = make_workshop(capacity=1)
     a, b, c = make_users(3)
-    first = services.register(user=a, workshop_id=workshop.pk)
-    services.register(user=b, workshop_id=workshop.pk)
-    services.register(user=c, workshop_id=workshop.pk)
+    first = register(a, workshop)
+    register(b, workshop)
+    register(c, workshop)
 
     with django_capture_on_commit_callbacks(execute=True):
-        services.cancel(user=a, registration_id=first.pk)
+        container.cancel_registration().execute(user_id=a.pk, registration_id=first.id)
 
     assert Registration.objects.get(user=b, workshop=workshop).status == Status.CONFIRMED
     assert Registration.objects.get(user=c, workshop=workshop).status == Status.WAITLISTED
@@ -66,7 +72,7 @@ def test_concurrent_registrations_never_oversell():
 
     def attempt(user):
         try:
-            return services.register(user=user, workshop_id=workshop.pk).status
+            return register(user, workshop).status
         finally:
             connection.close()
 

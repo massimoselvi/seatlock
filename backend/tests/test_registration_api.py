@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from django.utils import timezone
 from rest_framework.test import APIClient
 
-from workshops.models import Registration, Workshop
+from infrastructure.db.models import Registration, Workshop
 
 User = get_user_model()
 pytestmark = pytest.mark.django_db

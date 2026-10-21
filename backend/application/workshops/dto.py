@@ -10,15 +10,17 @@ class RegistrationResult:
 
     id: int
     workshop_id: int
+    workshop_title: str
     status: RegistrationStatus
     created_at: datetime | None
 
     @classmethod
-    def from_entity(cls, registration: Registration) -> "RegistrationResult":
+    def from_entity(cls, registration: Registration, workshop_title: str) -> "RegistrationResult":
         assert registration.id is not None
         return cls(
             id=registration.id,
             workshop_id=registration.workshop_id,
+            workshop_title=workshop_title,
             status=registration.status,
             created_at=registration.created_at,
         )
