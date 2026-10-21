@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 
-from .models import Workshop
+from .models import Registration, Workshop
 
 
 class WorkshopSerializer(serializers.ModelSerializer):
@@ -53,3 +53,12 @@ class SignupSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         return User.objects.create_user(**validated_data)
+
+
+class RegistrationSerializer(serializers.ModelSerializer):
+    workshop_title = serializers.CharField(source="workshop.title", read_only=True)
+
+    class Meta:
+        model = Registration
+        fields = ["id", "workshop", "workshop_title", "status", "created_at"]
+        read_only_fields = fields
