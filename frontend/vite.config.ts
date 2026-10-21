@@ -1,9 +1,12 @@
 import process from 'node:process'
 import vue from '@vitejs/plugin-vue'
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
   plugins: [vue()],
+  test: {
+    environment: 'happy-dom',
+  },
   server: {
     host: '0.0.0.0',
     port: 5173,

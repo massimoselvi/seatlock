@@ -1,21 +1,14 @@
 <script setup lang="ts">
-import type { OrganizerRegistration, OrganizerWorkshop } from '../api'
-import { onMounted, ref } from 'vue'
-import {
-  fetchOrganizerRegistrations,
-  fetchOrganizerWorkshops,
+import type { OrganizerRegistration, OrganizerWorkshop } from '../types'
+import { onMounted, shallowRef } from 'vue'
+import { fetchOrganizerRegistrations, fetchOrganizerWorkshops } from '../api'
+import { describeError } from '../utils'
 
-} from '../api'
-
-const workshops = ref<OrganizerWorkshop[]>([])
-const openId = ref<number | null>(null)
-const rows = ref<OrganizerRegistration[]>([])
-const error = ref<string | null>(null)
-const loading = ref(true)
-
-function describe(e: unknown): string {
-  return e instanceof Error ? e.message : 'Something went wrong'
-}
+const workshops = shallowRef<OrganizerWorkshop[]>([])
+const openId = shallowRef<number | null>(null)
+const rows = shallowRef<OrganizerRegistration[]>([])
+const error = shallowRef<string | null>(null)
+const loading = shallowRef(true)
 
 async function toggle(id: number) {
   if (openId.value === id) {
@@ -28,7 +21,7 @@ async function toggle(id: number) {
     openId.value = id
   }
   catch (e) {
-    error.value = describe(e)
+    error.value = describeError(e)
   }
 }
 
@@ -37,7 +30,7 @@ onMounted(async () => {
     workshops.value = await fetchOrganizerWorkshops()
   }
   catch (e) {
-    error.value = describe(e)
+    error.value = describeError(e)
   }
   finally {
     loading.value = false

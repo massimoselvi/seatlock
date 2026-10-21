@@ -1,13 +1,14 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { shallowRef } from 'vue'
 import { logIn, signUp } from '../session'
+import { describeError } from '../utils'
 
-const mode = ref<'login' | 'signup'>('login')
-const username = ref('')
-const email = ref('')
-const password = ref('')
-const error = ref<string | null>(null)
-const busy = ref(false)
+const mode = shallowRef<'login' | 'signup'>('login')
+const username = shallowRef('')
+const email = shallowRef('')
+const password = shallowRef('')
+const error = shallowRef<string | null>(null)
+const busy = shallowRef(false)
 
 async function submit() {
   error.value = null
@@ -18,7 +19,7 @@ async function submit() {
     else await signUp(username.value, email.value, password.value)
   }
   catch (e) {
-    error.value = e instanceof Error ? e.message : 'Something went wrong'
+    error.value = describeError(e)
   }
   finally {
     busy.value = false
