@@ -62,7 +62,9 @@ def test_me_and_logout(client):
     token = signup(client).json()["token"]
     auth = {"HTTP_AUTHORIZATION": f"Token {token}"}
 
-    assert client.get("/api/auth/me/", **auth).json()["username"] == "ada"
+    me = client.get("/api/auth/me/", **auth).json()
+    assert me["username"] == "ada"
+    assert me["is_staff"] is False
     assert client.post("/api/auth/logout/", **auth).status_code == 204
     assert client.get("/api/auth/me/", **auth).status_code == 401
 
