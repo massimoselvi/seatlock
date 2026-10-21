@@ -74,3 +74,41 @@ def test_invalid_page_is_not_cached_and_answers_normally(workshop):
     assert client.get("/api/workshops/?page=abc").status_code == 404
     assert client.get("/api/workshops/?page=999999").status_code == 404
     assert client.get("/api/workshops/?page=-1").status_code == 404
+
+
+def post_login(client, **extra):
+    return client.post(
+        "/api/auth/login/",
+        {"username": "nobody", "password": "wrong"},
+        content_type="application/json",
+        **extra,
+    )
+
+
+def test_login_is_rate_limited(client):
+    statuses = [post_login(client).status_code for _ in range(11)]
+
+    assert statuses[:10] == [400] * 10
+    assert statuses[10] == 429
+
+
+def test_spoofed_forwarded_for_prefix_does_not_reset_the_limit(client, settings):
+    settings.REST_FRAMEWORK = {**settings.REST_FRAMEWORK, "NUM_PROXIES": 2}
+
+    statuses = [
+        # The attacker invents the first address. The last two come from CloudFront and the ALB.
+        post_login(client, HTTP_X_FORWARDED_FOR=f"6.6.6.{i}, 203.0.113.7, 10.0.0.1").status_code
+        for i in range(11)
+    ]
+
+    assert statuses[10] == 429
+
+
+def test_different_real_clients_have_separate_limits(client, settings):
+    settings.REST_FRAMEWORK = {**settings.REST_FRAMEWORK, "NUM_PROXIES": 2}
+    for _ in range(10):
+        post_login(client, HTTP_X_FORWARDED_FOR="203.0.113.7, 10.0.0.1")
+
+    other = post_login(client, HTTP_X_FORWARDED_FOR="198.51.100.9, 10.0.0.1")
+
+    assert other.status_code == 400

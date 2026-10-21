@@ -52,6 +52,10 @@ class AppStack(Stack):
             "DEBUG": "false",
             # The ALB health check calls the task by IP, so host filtering happens at the edge.
             "ALLOWED_HOSTS": "*",
+            # Flip to "true" with the HTTPS listener from issue #47. Until then the ALB hop is HTTP.
+            "FORCE_HTTPS": "false",
+            # Client IP is the second address from the right: viewer, then the CloudFront edge.
+            "NUM_PROXIES": "2",
             "DB_HOST": data.database.db_instance_endpoint_address,
             "DB_NAME": DB_NAME,
             "DB_USER": DB_USER,
