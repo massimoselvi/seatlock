@@ -4,6 +4,7 @@ export default antfu({
   type: 'app',
   antislop: true,
   vue: { a11y: true },
+  unocss: true,
   typescript: true,
   ignores: ['dist', '**/*.css', 'index.html'],
 }, {

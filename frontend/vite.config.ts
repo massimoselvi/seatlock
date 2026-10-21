@@ -1,9 +1,10 @@
 import process from 'node:process'
 import vue from '@vitejs/plugin-vue'
+import UnoCSS from 'unocss/vite'
 import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
-  plugins: [vue()],
+  plugins: [UnoCSS(), vue()],
   test: {
     environment: 'happy-dom',
   },
