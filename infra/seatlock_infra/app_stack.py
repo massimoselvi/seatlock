@@ -52,6 +52,7 @@ class AppStack(Stack):
             "DEBUG": "false",
             # The ALB health check calls the task by IP, so host filtering happens at the edge.
             "ALLOWED_HOSTS": "*",
+            "ADMIN_ENABLED": "false",
             "DB_HOST": data.database.db_instance_endpoint_address,
             "DB_NAME": DB_NAME,
             "DB_USER": DB_USER,
@@ -99,6 +100,16 @@ class AppStack(Stack):
             targets=[self.web_service],
             health_check=elbv2.HealthCheck(path="/api/health/", healthy_http_codes="200"),
             deregistration_delay=Duration.seconds(30),
+        )
+
+        # The ALB is public. Keep the Django admin off it, whatever the app is configured to do.
+        listener.add_action(
+            "BlockAdmin",
+            priority=1,
+            conditions=[elbv2.ListenerCondition.path_patterns(["/admin", "/admin/*"])],
+            action=elbv2.ListenerAction.fixed_response(
+                403, content_type="text/plain", message_body="Forbidden"
+            ),
         )
 
         self._alarms(config, data, target_group)

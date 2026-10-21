@@ -139,3 +139,23 @@ def test_bootstrap_starts_no_tasks_until_an_image_exists():
     template = synth(replace(DEMO, bootstrap=True))["app"]
     services = template.find_resources("AWS::ECS::Service")
     assert {s["Properties"]["DesiredCount"] for s in services.values()} == {0}
+
+
+def test_admin_paths_are_blocked_at_the_load_balancer(demo):
+    demo["app"].has_resource_properties(
+        "AWS::ElasticLoadBalancingV2::ListenerRule",
+        {
+            "Priority": 1,
+            "Conditions": [
+                {"Field": "path-pattern", "PathPatternConfig": {"Values": ["/admin", "/admin/*"]}}
+            ],
+            "Actions": [
+                Match.object_like(
+                    {
+                        "Type": "fixed-response",
+                        "FixedResponseConfig": Match.object_like({"StatusCode": "403"}),
+                    }
+                )
+            ],
+        },
+    )
