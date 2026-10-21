@@ -1,0 +1,59 @@
+import pytest
+from django.contrib.auth import get_user_model
+from django.utils import timezone
+from rest_framework.test import APIClient
+
+from workshops import services
+from workshops.models import Workshop
+
+User = get_user_model()
+pytestmark = pytest.mark.django_db
+
+
+@pytest.fixture
+def workshop():
+    return Workshop.objects.create(title="Async Python", starts_at=timezone.now(), capacity=5)
+
+
+@pytest.fixture
+def user():
+    return User.objects.create_user("ada", "ada@example.com", "pw")
+
+
+def test_registration_endpoint_is_rate_limited(workshop, user):
+    client = APIClient()
+    client.force_authenticate(user)
+    url = f"/api/workshops/{workshop.pk}/register/"
+
+    statuses = [client.post(url).status_code for _ in range(11)]
+
+    assert statuses[:10] == [200] * 10
+    assert statuses[10] == 429
+
+
+def test_workshop_list_is_cached_until_seats_change(
+    workshop, user, django_capture_on_commit_callbacks
+):
+    client = APIClient()
+    first = client.get("/api/workshops/").json()
+    assert first["results"][0]["seats_left"] == 5
+
+    # A direct write does not invalidate the cache: the old page is still served.
+    Workshop.objects.create(title="Another", starts_at=timezone.now(), capacity=1)
+    assert client.get("/api/workshops/").json()["count"] == 1
+
+    # A seat change invalidates it after commit.
+    with django_capture_on_commit_callbacks(execute=True):
+        services.register(user=user, workshop_id=workshop.pk)
+    fresh = client.get("/api/workshops/").json()
+    assert fresh["count"] == 2
+    assert fresh["results"][0]["seats_left"] == 4
+
+
+def test_cache_is_not_invalidated_on_rollback(workshop, user):
+    client = APIClient()
+    client.get("/api/workshops/")
+    with pytest.raises(Workshop.DoesNotExist):
+        services.register(user=user, workshop_id=9999)
+    Workshop.objects.create(title="Another", starts_at=timezone.now(), capacity=1)
+    assert client.get("/api/workshops/").json()["count"] == 1

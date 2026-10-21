@@ -7,6 +7,7 @@ serialized and capacity can never be oversold.
 
 from django.db import transaction
 
+from .cache import invalidate_workshop_list
 from .models import Registration, Workshop
 
 Status = Registration.Status
@@ -30,7 +31,9 @@ def register(*, user, workshop_id: int) -> Registration:
     status = (
         Status.CONFIRMED if _confirmed_count(workshop) < workshop.capacity else Status.WAITLISTED
     )
-    return Registration.objects.create(workshop=workshop, user=user, status=status)
+    registration = Registration.objects.create(workshop=workshop, user=user, status=status)
+    invalidate_workshop_list()
+    return registration
 
 
 @transaction.atomic
@@ -46,6 +49,7 @@ def cancel(*, user, registration_id: int) -> Registration:
     freed_seat = registration.status == Status.CONFIRMED
     registration.status = Status.CANCELLED
     registration.save(update_fields=["status"])
+    invalidate_workshop_list()
 
     if freed_seat:
         from .tasks import promote_waitlist
@@ -68,4 +72,6 @@ def promote_waitlisted(*, workshop_id: int) -> list[Registration]:
     for registration in queue:
         registration.status = Status.CONFIRMED
         registration.save(update_fields=["status"])
+    if queue:
+        invalidate_workshop_list()
     return queue

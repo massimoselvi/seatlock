@@ -1,3 +1,5 @@
+from django.conf import settings
+from django.core.cache import cache
 from django.db.models import Count, Q
 from django.http import JsonResponse
 from rest_framework import generics, mixins, permissions, status, viewsets
@@ -5,8 +7,10 @@ from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
+from . import cache as workshop_cache
 from . import services
 from .models import Registration, Workshop
 from .serializers import (
@@ -24,6 +28,7 @@ def health(request):
 
 
 class WorkshopViewSet(viewsets.ReadOnlyModelViewSet):
+    throttle_scope = None  # per-action kwargs must exist as class attributes
     serializer_class = WorkshopSerializer
     queryset = Workshop.objects.annotate(
         seats_taken=Count(
@@ -32,7 +37,21 @@ class WorkshopViewSet(viewsets.ReadOnlyModelViewSet):
         )
     ).order_by("starts_at", "id")
 
-    @action(detail=True, methods=["post"], permission_classes=[permissions.IsAuthenticated])
+    def list(self, request, *args, **kwargs):
+        key = workshop_cache.list_key(request.META.get("QUERY_STRING", ""))
+        data = cache.get(key)
+        if data is None:
+            data = super().list(request, *args, **kwargs).data
+            cache.set(key, data, settings.WORKSHOP_LIST_CACHE_SECONDS)
+        return Response(data)
+
+    @action(
+        detail=True,
+        methods=["post"],
+        permission_classes=[permissions.IsAuthenticated],
+        throttle_classes=[ScopedRateThrottle],
+        throttle_scope="registration",
+    )
     def register(self, request, pk=None):
         try:
             registration = services.register(user=request.user, workshop_id=int(pk))
@@ -63,13 +82,19 @@ class OrganizerWorkshopViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class RegistrationViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+    throttle_scope = None
     serializer_class = RegistrationSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         return Registration.objects.filter(user=self.request.user).select_related("workshop")
 
-    @action(detail=True, methods=["post"])
+    @action(
+        detail=True,
+        methods=["post"],
+        throttle_classes=[ScopedRateThrottle],
+        throttle_scope="registration",
+    )
     def cancel(self, request, pk=None):
         try:
             registration = services.cancel(user=request.user, registration_id=int(pk))
@@ -79,6 +104,8 @@ class RegistrationViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
 
 
 class SignupView(generics.CreateAPIView):
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "auth"
     serializer_class = SignupSerializer
     permission_classes = [permissions.AllowAny]
     authentication_classes: list = []
