@@ -1,3 +1,5 @@
+"""ORM models. Persistence detail only. The business rules live in `domain/`."""
+
 from django.conf import settings
 from django.db import models
 from django.db.models import Q
