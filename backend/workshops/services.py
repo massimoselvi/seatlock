@@ -7,6 +7,7 @@ serialized and capacity can never be oversold.
 
 from django.db import transaction
 
+from . import rules
 from .cache import invalidate_workshop_list
 from .models import Registration, Workshop
 
@@ -28,9 +29,7 @@ def register(*, user, workshop_id: int) -> Registration:
     if existing:
         return existing
 
-    status = (
-        Status.CONFIRMED if _confirmed_count(workshop) < workshop.capacity else Status.WAITLISTED
-    )
+    status = rules.status_for_new_registration(workshop.capacity, _confirmed_count(workshop))
     registration = Registration.objects.create(workshop=workshop, user=user, status=status)
     invalidate_workshop_list()
     return registration
@@ -43,15 +42,15 @@ def cancel(*, user, registration_id: int) -> Registration:
     workshop = Workshop.objects.select_for_update().get(pk=registration.workshop_id)
     registration.refresh_from_db()
 
-    if registration.status == Status.CANCELLED:
+    outcome = rules.cancel(rules.RegistrationStatus(registration.status))
+    if not outcome.changed:
         return registration
 
-    freed_seat = registration.status == Status.CONFIRMED
-    registration.status = Status.CANCELLED
+    registration.status = outcome.status
     registration.save(update_fields=["status"])
     invalidate_workshop_list()
 
-    if freed_seat:
+    if outcome.freed_seat:
         from .tasks import promote_waitlist
 
         transaction.on_commit(lambda: promote_waitlist.delay(workshop.pk))
@@ -62,16 +61,18 @@ def cancel(*, user, registration_id: int) -> Registration:
 def promote_waitlisted(*, workshop_id: int) -> list[Registration]:
     """Fill free seats from the waitlist, oldest first. Returns promoted rows."""
     workshop = Workshop.objects.select_for_update().get(pk=workshop_id)
-    free = workshop.capacity - _confirmed_count(workshop)
-    if free <= 0:
+    confirmed = _confirmed_count(workshop)
+    free = rules.free_seats(workshop.capacity, confirmed)
+    if free == 0:
         return []
 
-    queue = list(
+    waitlist = list(
         workshop.registrations.filter(status=Status.WAITLISTED).select_related("user")[:free]
     )
-    for registration in queue:
-        registration.status = Status.CONFIRMED
+    promoted = rules.select_for_promotion(workshop.capacity, confirmed, waitlist)
+    for registration in promoted:
+        registration.status = rules.promote(rules.RegistrationStatus(registration.status))
         registration.save(update_fields=["status"])
-    if queue:
+    if promoted:
         invalidate_workshop_list()
-    return queue
+    return promoted
