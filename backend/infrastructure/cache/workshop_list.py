@@ -5,7 +5,8 @@ without needing to know which keys exist.
 """
 
 from django.core.cache import cache
-from django.db import transaction
+
+from application.workshops.interfaces import WorkshopListCache
 
 VERSION_KEY = "workshops:list:version"
 
@@ -14,13 +15,10 @@ def list_key(page: int) -> str:
     return f"workshops:list:v{cache.get(VERSION_KEY, 1)}:page{page}"
 
 
-def invalidate_workshop_list() -> None:
-    """Drop cached lists once the surrounding transaction commits."""
-
-    def bump() -> None:
+class DjangoWorkshopListCache(WorkshopListCache):
+    def invalidate(self) -> None:
+        # Called through UnitOfWork.on_commit, so it only runs for committed changes.
         try:
             cache.incr(VERSION_KEY)
         except ValueError:
             cache.set(VERSION_KEY, 2, timeout=None)
-
-    transaction.on_commit(bump)
