@@ -16,6 +16,8 @@ export default defineConfig({
     presetWind4({ dark: 'class', preflights: { reset: false } }),
     presetIcons({
       scale: 1.2,
+      // An explicit import, because pnpm's strict layout hides the package from the preset.
+      collections: { lucide: () => import('@iconify-json/lucide/icons.json').then(m => m.default) },
       extraProperties: { 'display': 'inline-block', 'vertical-align': 'middle' },
     }),
   ],
@@ -40,6 +42,7 @@ export default defineConfig({
     'btn-primary': 'btn bg-primary text-primary-fg hover:bg-primary/90',
     'btn-secondary': 'btn bg-secondary text-secondary-fg hover:bg-secondary/80',
     'btn-danger': 'btn bg-danger text-white hover:bg-danger/90',
+    'btn-ghost-danger': 'btn bg-transparent text-danger hover:bg-danger-subtle',
     'btn-link': 'inline-flex items-center min-h-11 bg-transparent border-0 p-0 text-primary underline cursor-pointer focus-visible:(outline-2 outline-offset-2 outline-primary)',
     'card': 'bg-surface rounded-lg border border-line p-5 shadow-sm',
     'field': 'grid gap-1 text-sm',

@@ -1,23 +1,11 @@
-:root { font-family: system-ui, sans-serif; color: #1f2430; }
-body { margin: 0; background: #f6f7f9; }
-main { max-width: 760px; margin: 0 auto; padding: 2rem 1rem; }
-.lead { color: #5b6270; }
-.cards { list-style: none; padding: 0; display: grid; gap: 1rem; }
-.cards li { background: #fff; border-radius: 10px; padding: 1rem 1.25rem; box-shadow: 0 1px 3px #0001; }
-.cards h2 { margin: 0 0 .25rem; font-size: 1.1rem; }
-.seats { margin: .5rem 0 0; font-weight: 600; color: #1a7f4b; }
-.seats.full { color: #b42318; }
 .error { color: #b42318; }
-.top { display: flex; justify-content: space-between; align-items: baseline; }
-.who { display: flex; gap: .75rem; align-items: baseline; color: #5b6270; }
 button { font: inherit; padding: .45rem .9rem; border: 0; border-radius: 6px; background: #2f5bea; color: #fff; cursor: pointer; }
 button:disabled { opacity: .6; cursor: progress; }
 button.link { background: none; color: #2f5bea; padding: 0; text-decoration: underline; }
-.cards button { margin-top: .75rem; }
 .badge { margin: .5rem 0 0; font-weight: 600; }
 .badge.confirmed { color: #1a7f4b; }
 .badge.waitlisted { color: #9a6700; }
+.badge.cancelled { color: #5b6270; }
 .table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 10px; box-shadow: 0 1px 3px #0001; }
 .table th, .table td { text-align: left; padding: .6rem .9rem; border-bottom: 1px solid #eef0f4; }
 .people { list-style: none; margin: 0; padding: 0; display: grid; gap: .35rem; }
-.badge.cancelled { color: #5b6270; }
