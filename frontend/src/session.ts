@@ -1,7 +1,7 @@
 import { reactive } from 'vue'
 import * as api from './api'
 
-export const session = reactive<{ user: api.User | null; ready: boolean }>({
+export const session = reactive<{ user: api.User | null, ready: boolean }>({
   user: null,
   ready: false,
 })
@@ -10,7 +10,8 @@ export async function restoreSession(): Promise<void> {
   if (api.getToken()) {
     try {
       session.user = await api.fetchMe()
-    } catch {
+    }
+    catch {
       api.setToken(null)
     }
   }
@@ -32,7 +33,8 @@ export async function signUp(username: string, email: string, password: string):
 export async function logOut(): Promise<void> {
   try {
     await api.logout()
-  } finally {
+  }
+  finally {
     api.setToken(null)
     session.user = null
   }

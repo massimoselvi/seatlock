@@ -1,12 +1,12 @@
 <script setup lang="ts">
+import type { Registration, Workshop } from './api'
 import { computed, onMounted, ref, watch } from 'vue'
 import {
   cancel,
   fetchMyRegistrations,
   fetchWorkshops,
   register,
-  type Registration,
-  type Workshop,
+
 } from './api'
 import AuthPanel from './components/AuthPanel.vue'
 import OrganizerDashboard from './components/OrganizerDashboard.vue'
@@ -20,7 +20,10 @@ const view = ref<'workshops' | 'organizer'>('workshops')
 
 const activeByWorkshop = computed(() => {
   const map = new Map<number, Registration>()
-  for (const r of registrations.value) if (r.status !== 'cancelled') map.set(r.workshop, r)
+  for (const r of registrations.value) {
+    if (r.status !== 'cancelled')
+      map.set(r.workshop, r)
+  }
   return map
 })
 
@@ -36,7 +39,8 @@ async function load() {
     ])
     workshops.value = list
     registrations.value = mine
-  } catch (e) {
+  }
+  catch (e) {
     error.value = describe(e)
   }
 }
@@ -47,9 +51,11 @@ async function act(workshopId: number, run: () => Promise<unknown>) {
   try {
     await run()
     await load()
-  } catch (e) {
+  }
+  catch (e) {
     error.value = describe(e)
-  } finally {
+  }
+  finally {
     pending.value = null
   }
 }
@@ -59,7 +65,8 @@ onMounted(async () => {
   await load()
 })
 watch(() => session.user, (user) => {
-  if (!user?.is_staff) view.value = 'workshops'
+  if (!user?.is_staff)
+    view.value = 'workshops'
   load()
 })
 </script>
@@ -77,40 +84,46 @@ watch(() => session.user, (user) => {
         >
           {{ view === 'organizer' ? 'Workshops' : 'Organizer dashboard' }}
         </button>
-        <button class="link" @click="logOut">Log out</button>
+        <button class="link" @click="logOut">
+          Log out
+        </button>
       </div>
     </header>
-    <p class="lead">Workshops with limited seats. No overselling, ever.</p>
+    <p class="lead">
+      Workshops with limited seats. No overselling, ever.
+    </p>
 
     <AuthPanel v-if="session.ready && !session.user" />
 
     <OrganizerDashboard v-if="view === 'organizer' && session.user?.is_staff" />
     <template v-else>
-    <p v-if="error" class="error" role="alert">{{ error }}</p>
-    <ul class="cards">
-      <li v-for="w in workshops" :key="w.id">
-        <h2>{{ w.title }}</h2>
-        <time :datetime="w.starts_at">{{ new Date(w.starts_at).toLocaleString() }}</time>
-        <p class="seats" :class="{ full: w.seats_left === 0 }">
-          {{ w.seats_left === 0 ? 'Full - join the waitlist' : `${w.seats_left} of ${w.capacity} seats left` }}
-        </p>
-        <template v-if="session.user">
-          <p v-if="activeByWorkshop.get(w.id)" class="badge" :class="activeByWorkshop.get(w.id)!.status">
-            {{ activeByWorkshop.get(w.id)!.status === 'confirmed' ? 'You have a seat' : 'You are on the waitlist' }}
+      <p v-if="error" class="error" role="alert">
+        {{ error }}
+      </p>
+      <ul class="cards">
+        <li v-for="w in workshops" :key="w.id">
+          <h2>{{ w.title }}</h2>
+          <time :datetime="w.starts_at">{{ new Date(w.starts_at).toLocaleString() }}</time>
+          <p class="seats" :class="{ full: w.seats_left === 0 }">
+            {{ w.seats_left === 0 ? 'Full - join the waitlist' : `${w.seats_left} of ${w.capacity} seats left` }}
           </p>
-          <button
-            v-if="activeByWorkshop.get(w.id)"
-            :disabled="pending === w.id"
-            @click="act(w.id, () => cancel(activeByWorkshop.get(w.id)!.id))"
-          >
-            Cancel
-          </button>
-          <button v-else :disabled="pending === w.id" @click="act(w.id, () => register(w.id))">
-            {{ w.seats_left === 0 ? 'Join waitlist' : 'Register' }}
-          </button>
-        </template>
-      </li>
-    </ul>
+          <template v-if="session.user">
+            <p v-if="activeByWorkshop.get(w.id)" class="badge" :class="activeByWorkshop.get(w.id)!.status">
+              {{ activeByWorkshop.get(w.id)!.status === 'confirmed' ? 'You have a seat' : 'You are on the waitlist' }}
+            </p>
+            <button
+              v-if="activeByWorkshop.get(w.id)"
+              :disabled="pending === w.id"
+              @click="act(w.id, () => cancel(activeByWorkshop.get(w.id)!.id))"
+            >
+              Cancel
+            </button>
+            <button v-else :disabled="pending === w.id" @click="act(w.id, () => register(w.id))">
+              {{ w.seats_left === 0 ? 'Join waitlist' : 'Register' }}
+            </button>
+          </template>
+        </li>
+      </ul>
     </template>
   </main>
 </template>

@@ -1,10 +1,10 @@
 <script setup lang="ts">
+import type { OrganizerRegistration, OrganizerWorkshop } from '../api'
 import { onMounted, ref } from 'vue'
 import {
   fetchOrganizerRegistrations,
   fetchOrganizerWorkshops,
-  type OrganizerRegistration,
-  type OrganizerWorkshop,
+
 } from '../api'
 
 const workshops = ref<OrganizerWorkshop[]>([])
@@ -26,7 +26,8 @@ async function toggle(id: number) {
   try {
     rows.value = await fetchOrganizerRegistrations(id)
     openId.value = id
-  } catch (e) {
+  }
+  catch (e) {
     error.value = describe(e)
   }
 }
@@ -34,9 +35,11 @@ async function toggle(id: number) {
 onMounted(async () => {
   try {
     workshops.value = await fetchOrganizerWorkshops()
-  } catch (e) {
+  }
+  catch (e) {
     error.value = describe(e)
-  } finally {
+  }
+  finally {
     loading.value = false
   }
 })
@@ -45,12 +48,18 @@ onMounted(async () => {
 <template>
   <section>
     <h2>Organizer dashboard</h2>
-    <p v-if="error" class="error" role="alert">{{ error }}</p>
-    <p v-if="loading">Loading...</p>
-    <p v-else-if="!workshops.length && !error">No workshops yet.</p>
+    <p v-if="error" class="error" role="alert">
+      {{ error }}
+    </p>
+    <p v-if="loading">
+      Loading...
+    </p>
+    <p v-else-if="!workshops.length && !error">
+      No workshops yet.
+    </p>
     <table v-else-if="workshops.length" class="table">
       <thead>
-        <tr><th>Workshop</th><th>Seats taken</th><th>Waitlist</th><th></th></tr>
+        <tr><th>Workshop</th><th>Seats taken</th><th>Waitlist</th><th /></tr>
       </thead>
       <tbody>
         <template v-for="w in workshops" :key="w.id">
@@ -66,7 +75,9 @@ onMounted(async () => {
           </tr>
           <tr v-if="openId === w.id">
             <td colspan="4">
-              <p v-if="!rows.length">Nobody has registered yet.</p>
+              <p v-if="!rows.length">
+                Nobody has registered yet.
+              </p>
               <ul v-else class="people">
                 <li v-for="r in rows" :key="r.id">
                   {{ r.username }} ({{ r.email }})
