@@ -86,6 +86,32 @@ A middle path: keep the current `workshops` app, move only the seat rules into p
 
 If the project grows a second delivery channel (a CLI, an admin import, a websocket) or the rules grow a lot, the full layering pays off. Revisit then.
 
+## The lite variant (`exp/clean-arch-5-lite`)
+
+Cut from `main`, not stacked on the others. It keeps the `workshops` app, the Django models, the views and the ORM calls in `services.py`. The only change: the seat **decisions** move into `workshops/rules.py`, plain functions with standard-library imports only. `services.py` loads rows, calls the rules, saves, and keeps all locking and transactions.
+
+| | `main` | Lite | Full (branch 4) |
+|---|-------:|-----:|----------------:|
+| App code | 14 files, 631 lines | 15 files, 694 lines (+10%) | 29 files, 1,029 lines (+63%) |
+| Tests | 41 | 57 | 73 |
+| Tests with no database | 0 | 16, in 0.08 s | 26, in 0.07 s |
+| `services.py` | 77 lines | 78 lines | replaced by 3 use cases |
+| Lock rule guarded by a fast test | no | **no** | yes |
+| After-commit and rollback behavior tested without a database | no | **no** | yes |
+| Layer rule enforced by a test | no | yes (`rules.py` is pure) | yes (4 layers) |
+
+**What lite keeps:** the decision rules are unit-tested without a database, a test guards the one duplicated enum, and a test keeps `rules.py` free of Django. It costs one new module and about 63 lines.
+
+**What lite gives up:** the three guarantees that matter most for seat integrity live in `services.py`, next to the ORM. They are the row lock, the "side effects only after commit" order, and "a failure triggers no side effect". Lite cannot test those without Postgres. The full version tests them in 0.07 s with the in-memory fake.
+
+**Honest reading:** the rules lite extracts are small (about 60 lines). It proves the idea but protects little. The part of the full version that protects the most is the unit-of-work port with its fake, and lite does not have it.
+
+### Updated verdict
+
+1. **Lite is the cheapest step and is safe to merge.** It changes no behavior, passes every test, and adds 16 fast tests. Take it if you want a foothold without a refactor.
+2. **Full is not worth it today**, for the cost reasons above.
+3. **The best next experiment is lite plus a unit-of-work port**: keep Django models and views, add only the `UnitOfWork` interface, one in-memory fake, and the three use cases. That recovers the lock and after-commit tests for a fraction of the full version's files. Try it as `exp/clean-arch-6-lite-uow`.
+
 ## How to review
 
 ```bash
