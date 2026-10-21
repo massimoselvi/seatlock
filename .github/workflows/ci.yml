@@ -24,6 +24,7 @@ jobs:
           --health-interval 5s --health-timeout 5s --health-retries 10
     env:
       DATABASE_URL: postgres://seatlock:seatlock@localhost:5432/seatlock
+      SECRET_KEY: ci-only-not-a-secret
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
@@ -31,6 +32,13 @@ jobs:
       - run: uv run ruff check .
       - run: uv run ruff format --check .
       - run: uv run python manage.py makemigrations --check --dry-run
+      - name: Deploy checks with production settings
+        run: uv run python manage.py check --deploy --fail-level WARNING
+        env:
+          DEBUG: "false"
+          SECRET_KEY: ci-only-key-${{ github.run_id }}-0123456789-abcdefghijklmnopqrstuvwxyz
+          ALLOWED_HOSTS: example.com
+          FORCE_HTTPS: "true"
       - run: uv run pytest --cov=workshops
 
   frontend:
