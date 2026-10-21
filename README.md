@@ -41,12 +41,12 @@ Business rules live in `backend/workshops/services.py`, not in views, so they ar
 
 ## Alternative version to check
 
-The branch [`xp/clean-arch-lite`](https://github.com/massimoselvi/seatlock/tree/xp/clean-arch-lite) is an experiment. It is not part of `main`.
+The branch [`exp/clean-arch-lite`](https://github.com/massimoselvi/seatlock/tree/exp/clean-arch-lite) is an experiment. It is not part of `main`.
 
 It moves the seat decisions into plain functions in `backend/workshops/rules.py`, which imports only the standard library. Django models, views and the row locking stay where they are. The change is small: one new module, about 60 lines. It adds 16 tests that run without a database.
 
 ```bash
-git diff --stat main...xp/clean-arch-lite
+git diff --stat main...exp/clean-arch-lite
 ```
 
 The comparison with a full Clean Architecture refactor is in [ADR 0005](https://github.com/massimoselvi/seatlock/blob/exp/clean-arch-4-interface/docs/adr/0005-clean-architecture-experiment.md).
