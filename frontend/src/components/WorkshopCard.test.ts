@@ -57,6 +57,14 @@ describe('workshopCard', () => {
     expect(render({ signedIn: false }).find('button').exists()).toBe(false)
   })
 
+  it('shows an action error inside the card', () => {
+    expect(render({ error: 'Seat already taken.' }).get('[role="alert"]').text()).toBe('Seat already taken.')
+  })
+
+  it('shows a Full badge to a signed-in user on a full workshop', () => {
+    expect(render({ workshop: { ...workshop, seats_left: 0 } }).text()).toContain('Full')
+  })
+
   it('disables the button while a request is pending', () => {
     expect(render({ pending: true }).find('button').attributes('disabled')).toBeDefined()
   })

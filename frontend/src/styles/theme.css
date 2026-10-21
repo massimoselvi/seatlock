@@ -51,3 +51,10 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+body {
+  margin: 0;
+  background: var(--c-canvas);
+  color: var(--c-text);
+  font-family: system-ui, sans-serif;
+}
