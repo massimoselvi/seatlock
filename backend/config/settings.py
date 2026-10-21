@@ -83,12 +83,16 @@ REST_FRAMEWORK = {
         "rest_framework.throttling.AnonRateThrottle",
         "rest_framework.throttling.UserRateThrottle",
     ],
+    # Number of proxies in front of the app, so DRF reads the real client IP from the right end
+    # of X-Forwarded-For. 0 means "trust only the socket address". ECS sets 2: CloudFront, ALB.
+    "NUM_PROXIES": env.int("NUM_PROXIES", default=0),
     "DEFAULT_THROTTLE_RATES": {
         "anon": "60/min",
         "user": "120/min",
         # Seat-changing endpoints are the expensive ones: they take a row lock.
         "registration": "10/min",
         "auth": "10/min",
+        "login": "10/min",
     },
 }
 
