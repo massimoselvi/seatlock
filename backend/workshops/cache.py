@@ -10,8 +10,8 @@ from django.db import transaction
 VERSION_KEY = "workshops:list:version"
 
 
-def list_key(query_string: str) -> str:
-    return f"workshops:list:v{cache.get(VERSION_KEY, 1)}:{query_string}"
+def list_key(page: int) -> str:
+    return f"workshops:list:v{cache.get(VERSION_KEY, 1)}:page{page}"
 
 
 def invalidate_workshop_list() -> None:

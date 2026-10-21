@@ -4,6 +4,7 @@ from django.db.models import Count, Q
 from django.http import JsonResponse
 from rest_framework import generics, mixins, permissions, status, viewsets
 from rest_framework.authtoken.models import Token
+from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
@@ -22,6 +23,8 @@ from .serializers import (
     WorkshopSerializer,
 )
 
+MAX_CACHED_PAGE = 1000
+
 
 def health(request):
     return JsonResponse({"status": "ok"})
@@ -38,7 +41,13 @@ class WorkshopViewSet(viewsets.ReadOnlyModelViewSet):
     ).order_by("starts_at", "id")
 
     def list(self, request, *args, **kwargs):
-        key = workshop_cache.list_key(request.META.get("QUERY_STRING", ""))
+        # Only the page number may vary the cache key. Any other query parameter is ignored,
+        # so a client cannot fill Redis with one entry per random string.
+        page = request.query_params.get("page", "1")
+        if not (page.isdecimal() and 1 <= int(page) <= MAX_CACHED_PAGE):
+            return super().list(request, *args, **kwargs)  # let DRF answer, uncached
+
+        key = workshop_cache.list_key(int(page))
         data = cache.get(key)
         if data is None:
             data = super().list(request, *args, **kwargs).data
@@ -134,3 +143,10 @@ class LogoutView(APIView):
     def post(self, request):
         Token.objects.filter(user=request.user).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class LoginView(ObtainAuthToken):
+    """DRF's own view switches throttling off, which leaves passwords open to guessing."""
+
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "login"
