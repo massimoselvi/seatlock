@@ -1,4 +1,4 @@
-from aws_cdk import Stack
+from aws_cdk import CfnOutput, Stack
 from aws_cdk import aws_ec2 as ec2
 from constructs import Construct
 
@@ -55,3 +55,15 @@ class NetworkStack(Stack):
             self, "CacheSg", vpc=self.vpc, description="Redis", allow_all_outbound=False
         )
         self.cache_sg.add_ingress_rule(self.app_sg, ec2.Port.tcp(6379), "App to Redis")
+
+        CfnOutput(self, "AppSecurityGroupId", value=self.app_sg.security_group_id)
+        CfnOutput(
+            self,
+            "TaskSubnetIds",
+            value=",".join(self._task_subnet_ids(config)),
+        )
+
+    def _task_subnet_ids(self, config: Config) -> list[str]:
+        if config.tasks_in_public_subnets:
+            return self.vpc.select_subnets(subnet_type=ec2.SubnetType.PUBLIC).subnet_ids
+        return self.vpc.select_subnets(subnet_group_name="app").subnet_ids
