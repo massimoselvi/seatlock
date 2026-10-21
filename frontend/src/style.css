@@ -8,3 +8,16 @@ main { max-width: 760px; margin: 0 auto; padding: 2rem 1rem; }
 .seats { margin: .5rem 0 0; font-weight: 600; color: #1a7f4b; }
 .seats.full { color: #b42318; }
 .error { color: #b42318; }
+.top { display: flex; justify-content: space-between; align-items: baseline; }
+.who { display: flex; gap: .75rem; align-items: baseline; color: #5b6270; }
+button { font: inherit; padding: .45rem .9rem; border: 0; border-radius: 6px; background: #2f5bea; color: #fff; cursor: pointer; }
+button:disabled { opacity: .6; cursor: progress; }
+button.link { background: none; color: #2f5bea; padding: 0; text-decoration: underline; }
+.cards button { margin-top: .75rem; }
+.badge { margin: .5rem 0 0; font-weight: 600; }
+.badge.confirmed { color: #1a7f4b; }
+.badge.waitlisted { color: #9a6700; }
+.auth { display: grid; gap: .75rem; max-width: 320px; background: #fff; padding: 1rem 1.25rem; border-radius: 10px; box-shadow: 0 1px 3px #0001; margin-bottom: 1.5rem; }
+.auth h2 { margin: 0; font-size: 1.1rem; }
+.auth label { display: grid; gap: .25rem; font-size: .9rem; }
+.auth input { font: inherit; padding: .4rem .5rem; border: 1px solid #c9ced8; border-radius: 6px; }
