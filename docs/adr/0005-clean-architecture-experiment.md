@@ -67,7 +67,7 @@ Checked on the running stack too: register, waitlist, cancel and the Celery prom
 
 ## What got worse
 
-- **62% more code and 15 more files** for the same behavior. Part of it is mapping: the ORM `Workshop` and the domain `Workshop` hold the same fields, and repositories convert both ways.
+- **63% more code and 15 more files** for the same behavior. Part of it is mapping: the ORM `Workshop` and the domain `Workshop` hold the same fields, and repositories convert both ways.
 - **More indirection.** A change to "what happens on cancel" touches the use case, a port and often a repository.
 - **Two models per concept.** Add a field and you edit the ORM model, the entity, the repository mapping and the serializer.
 - **Little gain on reads and accounts**, which is why they stay outside the use-case layer. That makes the architecture partial on purpose.
@@ -82,7 +82,7 @@ Two pieces are worth keeping even if the rest is dropped:
 1. **The `UnitOfWork` port with the in-memory fake.** It encodes the lock and after-commit rules and makes them cheap to test.
 2. **The architecture test.** It costs one file and prevents drift.
 
-A middle path: keep the current `workshops` app, move only the seat rules into plain entities and use cases, and keep Django models and views where they are. That captures most of the testing benefit with about a third of the new code. It would be worth trying as `exp/clean-arch-5-lite`.
+A middle path: keep the current `workshops` app, move only the seat rules into plain entities and use cases, and keep Django models and views where they are. That would keep most of the testing benefit with much less new code. It would be worth trying as `exp/clean-arch-5-lite`.
 
 If the project grows a second delivery channel (a CLI, an admin import, a websocket) or the rules grow a lot, the full layering pays off. Revisit then.
 
