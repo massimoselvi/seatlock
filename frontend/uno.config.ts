@@ -38,10 +38,9 @@ export default defineConfig({
   },
   // A class pattern used three times or more becomes a shortcut.
   shortcuts: {
-    'btn': 'inline-flex items-center justify-center gap-2 min-h-11 px-4 rounded-md border-0 font-600 cursor-pointer transition-colors duration-150 focus-visible:(outline-2 outline-offset-2 outline-primary) disabled:(opacity-60 cursor-progress)',
+    'btn': 'inline-flex items-center justify-center gap-2 min-h-11 px-4 rounded-md border-0 font-600 cursor-pointer transition-[background-color,transform] duration-150 active:scale-98 focus-visible:(outline-2 outline-offset-2 outline-primary) disabled:(opacity-60 cursor-progress)',
     'btn-primary': 'btn bg-primary text-primary-fg hover:bg-primary/90',
     'btn-secondary': 'btn bg-secondary text-secondary-fg hover:bg-secondary/80',
-    'btn-danger': 'btn bg-danger text-white hover:bg-danger/90',
     'btn-ghost-danger': 'btn bg-transparent text-danger hover:bg-danger-subtle',
     'btn-link': 'inline-flex items-center min-h-11 bg-transparent border-0 p-0 text-primary underline cursor-pointer focus-visible:(outline-2 outline-offset-2 outline-primary)',
     'card': 'bg-surface rounded-lg border border-line p-5 shadow-sm',
