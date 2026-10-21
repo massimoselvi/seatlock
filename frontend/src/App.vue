@@ -15,7 +15,14 @@ const error = shallowRef<string | null>(null)
 const actionError = shallowRef<{ workshopId: number, message: string } | null>(null)
 const loaded = shallowRef(false)
 const pending = shallowRef<number | null>(null)
-const view = shallowRef<'workshops' | 'organizer'>('workshops')
+type View = 'workshops' | 'organizer'
+
+const VIEWS: { id: View, label: string }[] = [
+  { id: 'workshops', label: 'Workshops' },
+  { id: 'organizer', label: 'Organizer dashboard' },
+]
+
+const view = shallowRef<View>('workshops')
 
 const activeByWorkshop = computed(() => {
   const map = new Map<number, Registration>()
@@ -76,16 +83,21 @@ watch(() => session.user, (user) => {
         <span class="i-lucide-armchair text-primary" aria-hidden="true" />
         Seatlock
       </h1>
-      <div class="flex gap-4 items-center">
+      <div class="flex flex-wrap gap-x-4 gap-y-2 items-center">
         <template v-if="session.user">
           <span class="text-muted">{{ session.user.username }}</span>
-          <button
-            v-if="session.user.is_staff"
-            class="btn-link"
-            @click="view = view === 'organizer' ? 'workshops' : 'organizer'"
-          >
-            {{ view === 'organizer' ? 'Workshops' : 'Organizer dashboard' }}
-          </button>
+          <nav v-if="session.user.is_staff" aria-label="Views" class="flex gap-4">
+            <button
+              v-for="v in VIEWS"
+              :key="v.id"
+              class="btn-link"
+              :class="view === v.id ? 'font-700 no-underline' : ''"
+              :aria-current="view === v.id ? 'page' : undefined"
+              @click="view = v.id"
+            >
+              {{ v.label }}
+            </button>
+          </nav>
           <button class="btn-link" @click="logOut">
             <span class="i-lucide-log-out mr-1" aria-hidden="true" />
             Log out

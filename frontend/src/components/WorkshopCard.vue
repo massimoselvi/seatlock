@@ -55,12 +55,12 @@ const when = computed(() => start.value.toLocaleString())
       </div>
       <div class="gap-1 grid">
         <SeatMeter :capacity="workshop.capacity" :taken="workshop.seats_taken" />
-        <p class="text-sm m-0 flex gap-1 items-center" :class="isFull ? 'text-danger' : 'text-muted'">
+        <p class="text-sm m-0 flex gap-1 items-center" :class="isFull ? 'text-danger' : 'text-muted'" aria-live="polite">
           <span class="i-lucide-armchair" aria-hidden="true" />
           {{ isFull ? 'Full - join the waitlist' : `${workshop.seats_left} of ${workshop.capacity} seats left` }}
         </p>
       </div>
-      <div v-if="signedIn" class="flex flex-wrap gap-3 items-center">
+      <div v-if="signedIn" class="flex flex-wrap gap-3 items-center" aria-live="polite">
         <StatusBadge v-if="myStatus" :status="myStatus">
           {{ MY_STATUS_LABEL[myStatus] }}
         </StatusBadge>
