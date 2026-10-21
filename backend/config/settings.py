@@ -107,3 +107,6 @@ CELERY_TASK_ALWAYS_EAGER = env.bool("CELERY_TASK_ALWAYS_EAGER", default=False)
 
 EMAIL_BACKEND = env("EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend")
 DEFAULT_FROM_EMAIL = "Seatlock <noreply@seatlock.local>"
+
+# The Django admin is for local use. Production turns it off (and the ALB blocks /admin too).
+ADMIN_ENABLED = env.bool("ADMIN_ENABLED", default=True)
