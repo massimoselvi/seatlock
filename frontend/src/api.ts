@@ -22,6 +22,19 @@ export interface User {
   id: number
   username: string
   email: string
+  is_staff: boolean
+}
+
+export interface OrganizerWorkshop extends Workshop {
+  waitlist_size: number
+}
+
+export interface OrganizerRegistration {
+  id: number
+  username: string
+  email: string
+  status: RegistrationStatus
+  created_at: string
 }
 
 interface Page<T> {
@@ -98,3 +111,8 @@ export const login = (data: { username: string; password: string }) =>
   post<{ token: string }>('/auth/login/', data)
 export const logout = () => post<void>('/auth/logout/')
 export const fetchMe = () => request<User>('/auth/me/')
+
+export const fetchOrganizerWorkshops = async () =>
+  (await request<Page<OrganizerWorkshop>>('/organizer/workshops/')).results
+export const fetchOrganizerRegistrations = (workshopId: number) =>
+  request<OrganizerRegistration[]>(`/organizer/workshops/${workshopId}/registrations/`)
