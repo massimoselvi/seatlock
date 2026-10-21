@@ -21,3 +21,7 @@ button.link { background: none; color: #2f5bea; padding: 0; text-decoration: und
 .auth h2 { margin: 0; font-size: 1.1rem; }
 .auth label { display: grid; gap: .25rem; font-size: .9rem; }
 .auth input { font: inherit; padding: .4rem .5rem; border: 1px solid #c9ced8; border-radius: 6px; }
+.table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 10px; box-shadow: 0 1px 3px #0001; }
+.table th, .table td { text-align: left; padding: .6rem .9rem; border-bottom: 1px solid #eef0f4; }
+.people { list-style: none; margin: 0; padding: 0; display: grid; gap: .35rem; }
+.badge.cancelled { color: #5b6270; }
