@@ -1,6 +1,6 @@
 /* Semantic color tokens. Components use these through the colors in uno.config.ts. */
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
 
   --c-canvas: oklch(98% 0.004 265);
   --c-surface: oklch(100% 0 0);
@@ -24,6 +24,8 @@
 }
 
 :root.dark {
+  color-scheme: dark;
+
   --c-canvas: oklch(17% 0.02 265);
   --c-surface: oklch(22% 0.02 265);
   --c-surface-raised: oklch(26% 0.02 265);
