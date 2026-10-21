@@ -10,6 +10,8 @@ from rest_framework.views import APIView
 from . import services
 from .models import Registration, Workshop
 from .serializers import (
+    OrganizerRegistrationSerializer,
+    OrganizerWorkshopSerializer,
     RegistrationSerializer,
     SignupSerializer,
     UserSerializer,
@@ -37,6 +39,27 @@ class WorkshopViewSet(viewsets.ReadOnlyModelViewSet):
         except Workshop.DoesNotExist:
             raise NotFound("Workshop not found.") from None
         return Response(RegistrationSerializer(registration).data, status=status.HTTP_200_OK)
+
+
+class OrganizerWorkshopViewSet(viewsets.ReadOnlyModelViewSet):
+    """Staff-only view: seats taken, waitlist size and who is registered."""
+
+    serializer_class = OrganizerWorkshopSerializer
+    permission_classes = [permissions.IsAdminUser]
+    queryset = Workshop.objects.annotate(
+        seats_taken=Count(
+            "registrations", filter=Q(registrations__status=Registration.Status.CONFIRMED)
+        ),
+        waitlist_size=Count(
+            "registrations", filter=Q(registrations__status=Registration.Status.WAITLISTED)
+        ),
+    ).order_by("starts_at", "id")
+
+    @action(detail=True, methods=["get"])
+    def registrations(self, request, pk=None):
+        workshop = self.get_object()
+        rows = workshop.registrations.select_related("user").order_by("created_at", "id")
+        return Response(OrganizerRegistrationSerializer(rows, many=True).data)
 
 
 class RegistrationViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
