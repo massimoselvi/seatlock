@@ -12,8 +12,7 @@ import {
  */
 export default defineConfig({
   presets: [
-    // The reset stays off until style.css is gone, so unconverted components keep their look.
-    presetWind4({ dark: 'class', preflights: { reset: false } }),
+    presetWind4({ dark: 'class' }),
     presetIcons({
       scale: 1.2,
       // An explicit import, because pnpm's strict layout hides the package from the preset.
