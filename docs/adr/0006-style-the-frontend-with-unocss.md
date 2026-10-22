@@ -1,6 +1,6 @@
 # 0006. Style the frontend with UnoCSS and the antfu toolchain
 
-Status: Proposed
+Status: Accepted (2026-10-22)
 
 ## Context
 

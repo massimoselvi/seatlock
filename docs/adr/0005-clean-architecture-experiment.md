@@ -27,7 +27,7 @@ Adopt the four-layer structure built in `exp/clean-arch-4-interface`.
 6. **A test enforces the layers.** `tests/test_architecture.py` fails the build on a forbidden import.
 7. **Storage does not change.** The ORM app keeps the label `workshops`, so table names and the migration history are the same. The Celery task keeps its old name, `workshops.tasks.promote_waitlist`, so queued messages stay valid.
 
-The lite variant (`exp/clean-arch-lite`) is **not** adopted. Its comparison is kept below for the record.
+The lite variant (`exp/clean-arch-lite`) is **not** adopted. Its comparison is kept below for the record. Its code is kept at the tag `archive/clean-arch-lite`.
 
 ## What was built
 
@@ -39,6 +39,8 @@ Four stacked branches. Each one runs, passes every test and leaves the API uncha
 | `exp/clean-arch-2-application` | `application/`: ports (`interfaces.py`), DTOs and three use cases: `RegisterForWorkshop`, `CancelRegistration`, `PromoteWaitlist`. |
 | `exp/clean-arch-3-infrastructure` | `infrastructure/`: ORM models and migrations, repositories, unit of work, cache, mailer, Celery adapters, composition root. |
 | `exp/clean-arch-4-interface` | `interface/api/`: views and serializers split by context. A test that enforces the import rules. Tests grouped by layer. |
+
+The four branches were merged to `main` in PR #75 and then deleted. Their commits are in the history of `main`: `git log --oneline f681d12^..8f31c89`.
 
 ```
 backend/
@@ -115,7 +117,7 @@ The experiment's first verdict advised against adopting the full layering on cos
 - New code goes where [docs/architecture.md](../architecture.md) says. The PR template and `CODEOWNERS` point at the new paths.
 - ADR 0001 and ADR 0002 stay valid. Their file references now point at `domain/`, `application/` and `infrastructure/db/repositories.py`.
 - The concurrency test is the only proof of the real lock. Keep it, and do not delete it for speed.
-- `exp/clean-arch-lite` is closed as an alternative. The follow-up experiment `exp/clean-arch-6-lite-uow` is dropped, because the full variant already has the unit-of-work port.
+- `exp/clean-arch-lite` is closed as an alternative. The tag `archive/clean-arch-lite` keeps its code. The follow-up experiment `exp/clean-arch-6-lite-uow` is dropped, because the full variant already has the unit-of-work port.
 
 ## Known gaps and follow-ups
 
@@ -130,7 +132,7 @@ These are real and not yet fixed.
 ## Alternatives considered
 
 - **Keep `main` as it was.** The cheapest option. Seat tests all need Postgres and the lock order is guarded only by the slow concurrency test.
-- **Lite (`exp/clean-arch-lite`).** One new module, `workshops/rules.py`, with plain decision functions. It costs +10% code. It tests the decisions without a database but leaves the lock, the after-commit order and rollback behavior untestable without Postgres. Rejected.
+- **Lite (`exp/clean-arch-lite`, tag `archive/clean-arch-lite`).** One new module, `workshops/rules.py`, with plain decision functions. It costs +10% code. It tests the decisions without a database but leaves the lock, the after-commit order and rollback behavior untestable without Postgres. Rejected.
 - **Lite plus a unit-of-work port.** Proposed as a next experiment, never built. The accepted structure already contains the port, so this option is dropped.
 
 ### The lite variant in detail
@@ -148,8 +150,8 @@ Cut from `main`, not stacked on the others. It keeps the `workshops` app, the Dj
 ## How to review
 
 ```bash
-git diff --stat main...exp/clean-arch-4-interface
-git log --oneline main..exp/clean-arch-4-interface
+git log --oneline f681d12^..8f31c89                       # the experiment, step by step
+git diff --stat f31411b archive/clean-arch-lite -- backend  # the lite variant against the old main
 docker compose run --rm web pytest tests/unit      # the 26 database-free unit tests
 docker compose run --rm web pytest tests/test_architecture.py
 ```

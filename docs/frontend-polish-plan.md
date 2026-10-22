@@ -1,7 +1,7 @@
 # Frontend polish plan
 
-Initial plan to improve the Vue frontend. Branch: `exp/frontend-polish` (from `exp/clean-arch-lite`).
-Status: implemented with UnoCSS on `exp/style-unocss`. The decision is recorded in [ADR 0006](adr/0006-style-the-frontend-with-unocss.md). The text below is the original plan, kept for the record.
+Initial plan to improve the Vue frontend. It was planned on the branch `exp/frontend-polish`, now deleted.
+Status: implemented with UnoCSS and merged to `main` in PR #75. The decision is recorded in [ADR 0006](adr/0006-style-the-frontend-with-unocss.md). The text below is the original plan, kept for the record.
 
 ## Current state
 
