@@ -153,15 +153,15 @@ The job is not a required status check. A required check must report on every pu
 - **Direct database access.** The script creates users and reads results from the database. It does not go through a load balancer, a CDN or a connection pooler. A pooler in transaction or statement mode could break row locks (see the [oversold runbook](runbooks/seats-oversold.md)). That deployment must be tested separately.
 - **Only seat-changing endpoints.** The public list, the organizer endpoints and sign-up are not loaded here.
 
-## Incidental finding
+## Incidental finding (fixed)
 
-gunicorn 26 tries to open a control socket in `$HOME/.gunicorn`. The container user `app` has no home directory, so each start logs:
+gunicorn 26 tries to open a control socket in `$HOME/.gunicorn`. The container user `app` has no home directory, so each start logged:
 
 ```
 [ERROR] Control server error: [Errno 13] Permission denied: '/home/app'
 ```
 
-It is not fatal, and the server runs normally. The load test passes `--no-control-socket` to avoid the noise. The `Dockerfile` command and `WEB_COMMAND` in the CDK stack start gunicorn as the same user, so production logs most likely show the same line. This was not checked on AWS. Adding `--no-control-socket` to both would remove it. It was not changed here.
+It was not fatal, and the server ran normally. The `Dockerfile` command and `WEB_COMMAND` in the CDK stack now pass `--no-control-socket`, and the log line is gone. The load test passes the same flag, because it starts its own gunicorn. The ECS tasks use the same image and the same user, so they had the same line. That was not checked on AWS itself.
 
 ## Ideas for later
 
