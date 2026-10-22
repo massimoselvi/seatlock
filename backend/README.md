@@ -2,6 +2,8 @@
 
 Django 6 and Django REST Framework API for workshops with limited seats. A seat can never be sold twice.
 
+> **This is the `exp/clean-arch-lite` experiment.** It differs from `main` in one way: the seat decisions moved out of `services.py` into `workshops/rules.py`, plain functions that import only the standard library. Everything else is the same. See [ADR 0005](https://github.com/massimoselvi/seatlock/blob/exp/clean-arch-4-interface/docs/adr/0005-clean-architecture-experiment.md) for the comparison.
+
 **Stack:** Django · DRF · PostgreSQL · Celery · Redis · uv · pytest · ruff
 
 ## Layout
@@ -11,7 +13,8 @@ backend/
   config/        settings, root urls, Celery app, wsgi and asgi
   workshops/     the only Django app
     models.py        Workshop, Registration and their database constraints
-    services.py      seat rules: register, cancel, promote the waitlist
+    rules.py         pure seat decisions: no Django, no database
+    services.py      register, cancel, promote the waitlist: loads rows, asks the rules, saves
     tasks.py         Celery task that promotes the waitlist and sends email
     cache.py         versioned cache of the public workshops list
     serializers.py   JSON shapes
@@ -25,8 +28,8 @@ backend/
 
 ## Design rules
 
-- **Business rules live in `workshops/services.py`**, never in views.
-- **Seat changes lock the workshop row.** Every function that changes seat counts calls `select_for_update()` inside `transaction.atomic`. Concurrent requests for one workshop queue up, so capacity cannot be oversold.
+- **Seat decisions live in `workshops/rules.py`.** It imports only the standard library, and a test keeps it that way. `services.py` loads the rows, calls the rules, saves, and owns the locking and transactions. Views hold no business rules.
+- **Seat changes lock the workshop row.** Every function in `services.py` that changes seat counts calls `select_for_update()` inside `transaction.atomic`. Concurrent requests for one workshop queue up, so capacity cannot be oversold.
 - **Database constraints back up the code.** Capacity must be above zero. A user can hold only one active (confirmed or waitlisted) registration per workshop.
 - **Celery tasks are enqueued with `transaction.on_commit`.** A task never runs for a change that rolled back.
 - **Registration is idempotent.** Repeating a request returns the existing registration.
@@ -120,7 +123,9 @@ docker compose run --rm web python manage.py makemigrations --check --dry-run
 
 | File | Covers |
 |------|--------|
-| `test_services.py` | seat rules, waitlist, idempotency, concurrency |
+| `test_rules.py` | the pure seat decisions. **No database**, runs in about 0.1 s. |
+| `test_architecture.py` | `rules.py` imports only the standard library. **No database.** |
+| `test_services.py` | register, cancel and promote against PostgreSQL, idempotency, concurrency |
 | `test_registration_api.py` | register and cancel over HTTP |
 | `test_organizer_api.py` | staff-only dashboard endpoints |
 | `test_auth.py` | signup, login, logout, `me` |
