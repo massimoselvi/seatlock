@@ -31,7 +31,8 @@ jobs:
       - name: Export the model as JSON
         run: |
           mkdir -p "$RUNNER_TEMP/model"
-          docker run --rm -v "$PWD/docs/architecture":/usr/local/structurizr \
+          # Run as the runner's user, or the container cannot write to the runner's folder.
+          docker run --rm --user "$(id -u):$(id -g)" -v "$PWD/docs/architecture":/usr/local/structurizr \
             -v "$RUNNER_TEMP/model":/out "$STRUCTURIZR" \
             export -w /usr/local/structurizr/workspace.dsl -f json -o /out
       - name: Check that the diagrams match the views
