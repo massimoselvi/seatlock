@@ -46,24 +46,18 @@ Business rules live in `backend/domain/` (seat decisions) and `backend/applicati
 - [ADRs](docs/adr/): row locks (0001), tasks on commit (0002), AWS target (0003), CDK (0004), clean architecture (0005), frontend styling (0006)
 - [Deploy and rollback](docs/deploy.md), [SLOs](docs/slo.md) and [runbooks](docs/runbooks/)
 
-## Alternative version to check
+## Rejected alternative
 
-The branch [`exp/clean-arch-lite`](https://github.com/massimoselvi/seatlock/tree/exp/clean-arch-lite) is an experiment. It is not part of `main`.
+A lighter variant of the architecture, `exp/clean-arch-lite`, was tried and **not** adopted. It moves only the seat decisions into plain functions in `backend/workshops/rules.py` and leaves the locking in `services.py`. Its code is kept at the tag [`archive/clean-arch-lite`](https://github.com/massimoselvi/seatlock/tree/archive/clean-arch-lite).
 
-It moves the seat decisions into plain functions in `backend/workshops/rules.py`, which imports only the standard library. Django models, views and the row locking stay where they are. The change is small: one new module, about 60 lines. It adds 16 tests that run without a database.
-
-```bash
-git diff --stat main...exp/clean-arch-lite
-```
-
-The comparison with a full Clean Architecture refactor is in [ADR 0005](https://github.com/massimoselvi/seatlock/blob/exp/clean-arch-4-interface/docs/adr/0005-clean-architecture-experiment.md).
+The comparison, including a test that shows what the lighter variant misses, is in [ADR 0005](docs/adr/0005-clean-architecture-experiment.md).
 
 ## Roadmap
 
 - [x] Models, constraints, seat allocation service, waitlist promotion task
 - [x] Read-only workshops API, Vue list page, CI
 - [x] Clean architecture for the backend ([ADR 0005](docs/adr/0005-clean-architecture-experiment.md))
-- [ ] Auth, register/cancel API endpoints and UI
-- [ ] Organizer dashboard
-- [ ] Rate limiting and caching on the public list
-- [ ] Deployment (AWS)
+- [x] Auth, register/cancel API endpoints and UI
+- [x] Organizer dashboard
+- [x] Rate limiting and caching on the public list
+- [ ] Deployment (AWS): the CDK stack and the deploy guide are written, but not yet run against a real account
