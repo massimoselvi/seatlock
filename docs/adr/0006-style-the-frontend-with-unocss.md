@@ -1,4 +1,4 @@
-# 0005. Style the frontend with UnoCSS and the antfu toolchain
+# 0006. Style the frontend with UnoCSS and the antfu toolchain
 
 Status: Proposed
 

@@ -1,7 +1,7 @@
 # Frontend polish plan
 
 Initial plan to improve the Vue frontend. Branch: `exp/frontend-polish` (from `exp/clean-arch-lite`).
-Status: draft. No code changed yet.
+Status: implemented with UnoCSS on `exp/style-unocss`. The decision is recorded in [ADR 0006](adr/0006-style-the-frontend-with-unocss.md). The text below is the original plan, kept for the record.
 
 ## Current state
 
@@ -91,7 +91,7 @@ Recommendation:
 
 - Job-market goal: Tailwind v4, plus `unplugin-icons` (Iconify) if icons are needed.
 - Clean-code goal: Open Props with scoped CSS.
-Record the final choice as an ADR (next number: `0005`) before step 1 of the order below.
+Record the final choice as an ADR before step 1 of the order below. It became [ADR 0006](adr/0006-style-the-frontend-with-unocss.md).
 
 ## Tailwind v4 steps (if chosen)
 
@@ -115,8 +115,8 @@ Run `docker compose up --build` at the end to check the full stack.
 
 `impeccable`, `redesign-existing-projects`, `frontend-design`, `break-ui`, `design:accessibility-review`, `animate`, `mobile-native`.
 
-## Open questions
+## Open questions (answered)
 
-- Which scope: items 1–3 and 5 only, or all seven?
-- Which visual direction: minimalist, editorial or dark-tech?
-- Which styling option: Tailwind v4, UnoCSS or plain CSS?
+- Scope: all seven items were done.
+- Visual direction: minimalist, with an indigo primary color.
+- Styling option: UnoCSS, with the antfu toolchain. See ADR 0006 for the alternatives.
