@@ -1,5 +1,6 @@
 from rest_framework import serializers
 
+from domain.workshops.entities import Workshop as WorkshopEntity
 from infrastructure.db.models import Registration, Workshop
 
 
@@ -20,7 +21,9 @@ class WorkshopSerializer(serializers.ModelSerializer):
         ]
 
     def get_seats_left(self, obj: Workshop) -> int:
-        return max(obj.capacity - obj.seats_taken, 0)
+        # The seat rule lives in the domain. The serializer only asks it.
+        entity = WorkshopEntity(id=obj.pk, title=obj.title, capacity=obj.capacity)
+        return entity.free_seats(obj.seats_taken)
 
 
 class RegistrationSerializer(serializers.ModelSerializer):

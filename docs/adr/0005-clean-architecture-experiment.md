@@ -123,8 +123,8 @@ The experiment's first verdict advised against adopting the full layering on cos
 
 These are real and not yet fixed.
 
-1. **No drift test for the status enum.** The domain `RegistrationStatus` and the ORM `Registration.Status` are two separate lists. The repository converts with `RegistrationStatus(row.status)`, so a status added only to the model raises `ValueError` at runtime. The lite variant had a test for this. Add one, or build the choices from one source.
-2. **`seats_left` is computed twice.** `WorkshopSerializer.get_seats_left` repeats `Workshop.free_seats`. It is a read-side convenience, but it is a second copy of a rule.
+1. **Fixed (2026-10-22): no drift test for the status enum.** The domain `RegistrationStatus` and the ORM `Registration.Status` are still two lists, because the domain cannot import Django. `tests/test_status_mapping.py` now fails the build if they differ. It needs no database. With a status added only to the model, two of its three tests fail.
+2. **Fixed (2026-10-22): `seats_left` was computed twice.** `WorkshopSerializer.get_seats_left` now calls `Workshop.free_seats` in the domain.
 3. **A promotion email can be lost.** Email is sent after commit, outside the transaction. A worker crash between the commit and the send loses the email. The seat is still confirmed.
 4. **A queued promotion can be lost.** Unchanged from ADR 0002: a crash between commit and enqueue loses the task. A periodic sweep would close the gap.
 5. **The architecture test covers imports only.** It cannot see a business rule that sits in a view. Review and `CODEOWNERS` cover that.
@@ -145,7 +145,7 @@ Cut from `main`, not stacked on the others. It keeps the `workshops` app, the Dj
 | Lock rule guarded by a fast test | no | no | yes |
 | After-commit and rollback behavior tested without a database | no | no | yes |
 | Layer rule enforced by a test | no | yes (`rules.py` is pure) | yes (4 layers) |
-| Enum drift guarded by a test | n/a | yes | **no** (gap 1 above) |
+| Enum drift guarded by a test | n/a | yes | no at first, **yes** since gap 1 was fixed |
 
 ## How to review
 
