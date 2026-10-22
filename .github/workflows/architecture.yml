@@ -1,0 +1,40 @@
+name: Architecture
+
+# Checks the C4 model in docs/architecture. See docs/architecture/README.md.
+on:
+  pull_request:
+    paths:
+      - "docs/architecture/**"
+      - ".github/workflows/architecture.yml"
+
+# Least privilege: no job here writes to the repository.
+permissions:
+  contents: read
+
+concurrency:
+  group: architecture-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  workspace:
+    name: validate the C4 model
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      STRUCTURIZR: structurizr/structurizr:2026.09.19
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate the workspace
+        run: >-
+          docker run --rm -v "$PWD/docs/architecture":/usr/local/structurizr "$STRUCTURIZR"
+          validate -workspace /usr/local/structurizr/workspace.dsl
+      - name: Export the model as JSON
+        run: |
+          mkdir -p "$RUNNER_TEMP/model"
+          docker run --rm -v "$PWD/docs/architecture":/usr/local/structurizr \
+            -v "$RUNNER_TEMP/model":/out "$STRUCTURIZR" \
+            export -w /usr/local/structurizr/workspace.dsl -f json -o /out
+      - name: Check that the diagrams match the views
+        run: >-
+          python3 docs/architecture/tools/check-diagrams.py
+          "$RUNNER_TEMP/model/workspace.json" docs/architecture/diagrams docs/architecture/README.md
