@@ -8,7 +8,7 @@ Two users can ask for the last seat at the same time. A read-then-write check le
 
 ## Decision
 
-Every change to seat counts runs in `transaction.atomic` and locks the Workshop row with `select_for_update()`. The rules live in `workshops/services.py`. Database constraints back up the code: capacity is greater than 0, and a user has one active registration per workshop.
+Every change to seat counts runs in `transaction.atomic` and locks the Workshop row with `select_for_update()`. The rules live in `domain/` and the use cases in `application/workshops/services.py`. The lock is taken in `infrastructure/db/repositories.py` (`DjangoWorkshopRepository.lock`). [ADR 0005](0005-clean-architecture-experiment.md) moved the code there. The decision is unchanged. Database constraints back up the code: capacity is greater than 0, and a user has one active registration per workshop.
 
 ## Alternatives
 

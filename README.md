@@ -32,12 +32,12 @@ docker compose run --rm web ruff check .
 ## Layout
 
 ```
-backend/    Django project (config/) and the workshops app: models, services, tasks, API
+backend/    Django project (config/) and four layers: domain, application, infrastructure, interface
 frontend/   Vue 3 + Vite + TypeScript
 compose.yaml  db, redis, web, worker, frontend
 ```
 
-Business rules live in `backend/workshops/services.py`, not in views, so they are easy to test and reuse.
+Business rules live in `backend/domain/` (seat decisions) and `backend/application/` (use cases), never in views, so they are easy to test without a database. See [docs/architecture.md](docs/architecture.md) for the layers, the request flows and the diagrams, and [ADR 0005](docs/adr/0005-clean-architecture-experiment.md) for the decision.
 
 ## Roadmap
 
