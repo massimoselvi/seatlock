@@ -22,7 +22,7 @@ npx aws-cdk@2.1146.0 diff -c env=prod           # needs AWS credentials
 ```
 
 Options (`-c key=value`): `env` (`demo` or `prod`), `alarm_email`, `image_tag`, `destroy_by` (a date, added as the `DestroyBy` tag).
-Every resource gets the tags `Project=seatlock`, `Env` and `ManagedBy=cdk`. List everything the project owns with the Resource Groups Tagging API, or filter Cost Explorer by `Project`.
+Every resource gets the tags `Project=seatlock`, `Env` and `ManagedBy=cdk`. List everything the project owns with the Resource Groups Tagging API. To filter Cost Explorer by `Project`, first activate the tag as a cost allocation tag in the billing console. It then takes up to a day to appear. In a dedicated account you can also filter by account.
 Demo and prod differ only in `seatlock_infra/config.py`.
 
 ## Known limits
