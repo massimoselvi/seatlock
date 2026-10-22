@@ -1,0 +1,214 @@
+name: Load test
+
+# Fires 200 simultaneous registrations for 10 seats at a real gunicorn, PostgreSQL, Redis and a
+# Celery worker, and checks that no seat is sold twice. Method and results: docs/load-test.md.
+#
+# It runs when someone starts it by hand, and on pull requests that touch the code that decides
+# or protects seat counts. It checks invariants, not timings, so a green run does not depend on
+# how fast the runner is.
+on:
+  workflow_dispatch:
+    inputs:
+      users:
+        description: Users in scenario A
+        default: "200"
+      seats:
+        description: Seats per workshop
+        default: "10"
+      control:
+        description: Also run the control, which removes the row lock and expects the test to fail
+        type: boolean
+        default: false
+  pull_request:
+    paths:
+      - "backend/domain/**"
+      - "backend/application/**"
+      - "backend/infrastructure/**"
+      - "backend/config/settings.py"
+      - "backend/scripts/load_test.py"
+      - ".github/workflows/load-test.yml"
+
+# Least privilege: no job here writes to the repository.
+permissions:
+  contents: read
+
+concurrency:
+  group: load-test-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  load-test:
+    name: load test (${{ matrix.workers }} workers x ${{ matrix.threads }} threads)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # 4x1 matches production: 2 tasks with 2 gunicorn workers each.
+          - workers: 4
+            threads: 1
+          # 4x8 lets up to 32 requests fight for the lock at once.
+          - workers: 4
+            threads: 8
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: seatlock
+          POSTGRES_PASSWORD: seatlock
+          POSTGRES_DB: seatlock
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U seatlock"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgres://seatlock:seatlock@localhost:5432/seatlock
+      CELERY_BROKER_URL: redis://localhost:6379/0
+      CACHE_URL: redis://localhost:6379/1
+      SECRET_KEY: ci-only-not-a-secret
+      LT_USERS: ${{ github.event.inputs.users || '200' }}
+      LT_SEATS: ${{ github.event.inputs.seats || '10' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --frozen
+      - run: uv run --no-sync python manage.py migrate --noinput
+      - name: Start a Celery worker
+        # Scenario C needs it: the cancel storm is followed by waitlist promotions.
+        run: |
+          nohup uv run --no-sync celery -A config worker --loglevel=warning > ../celery.log 2>&1 &
+          for _ in $(seq 1 30); do
+            if uv run --no-sync celery -A config inspect ping --timeout 2 > /dev/null 2>&1; then
+              echo "worker is up"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "::error::The Celery worker did not start"
+          cat ../celery.log
+          exit 1
+      - name: Run the load test
+        run: >-
+          uv run --no-sync python scripts/load_test.py
+          --workers ${{ matrix.workers }} --threads ${{ matrix.threads }}
+          --users "$LT_USERS" --seats "$LT_SEATS"
+          --out ../load-test-result.json
+      - name: Summary
+        if: always()
+        run: |
+          test -f ../load-test-result.json || exit 0
+          python3 - >> "$GITHUB_STEP_SUMMARY" <<'PY'
+          import json
+
+          result = json.load(open("../load-test-result.json"))
+          server = result["server"]
+          print(f"### Load test: {server['workers']} workers x {server['threads']} threads")
+          print(f"{result['users']} users, {result['seats']} seats. "
+                f"{'All checks passed.' if result['passed'] else '**Checks failed.**'}\n")
+          print("| Scenario | Requests | p50 ms | p95 ms | Status codes | Max confirmed | Checks |")
+          print("|---|---:|---:|---:|---|---:|---|")
+          for s in result["scenarios"]:
+              ok = sum(c["passed"] for c in s["checks"])
+              print(f"| {s['scenario']} | {s['requests']} | {s['latency_ms']['p50']} "
+                    f"| {s['latency_ms']['p95']} | {s['status_codes']} "
+                    f"| {s['max_confirmed_seen'] if s['max_confirmed_seen'] is not None else ''} "
+                    f"| {ok}/{len(s['checks'])} |")
+              for c in s["checks"]:
+                  if not c["passed"]:
+                      print(f"|  | FAIL: {c['check']} {c['detail']} | | | | | |")
+          PY
+      - name: Keep the results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: load-test-${{ matrix.workers }}x${{ matrix.threads }}
+          path: |
+            load-test-result.json
+            celery.log
+          if-no-files-found: ignore
+
+  # A test that cannot fail proves nothing. This job removes the row lock and expects the load
+  # test to fail. Starting it by hand is enough: it is not part of the pull request run.
+  control-without-lock:
+    name: control (the test must fail without the row lock)
+    if: github.event_name == 'workflow_dispatch' && inputs.control
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: seatlock
+          POSTGRES_PASSWORD: seatlock
+          POSTGRES_DB: seatlock
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U seatlock"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgres://seatlock:seatlock@localhost:5432/seatlock
+      CELERY_BROKER_URL: redis://localhost:6379/0
+      CACHE_URL: redis://localhost:6379/1
+      SECRET_KEY: ci-only-not-a-secret
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --frozen
+      - run: uv run --no-sync python manage.py migrate --noinput
+      - name: Remove the row lock
+        run: |
+          file=infrastructure/db/repositories.py
+          if ! grep -q 'select_for_update()' "$file"; then
+            echo "::error::select_for_update() was not found in $file. Update this step."
+            exit 1
+          fi
+          sed -i 's/\.select_for_update()//' "$file"
+          if grep -q 'select_for_update()' "$file"; then
+            echo "::error::The row lock is still there. Update this step."
+            exit 1
+          fi
+          echo "Removed the row lock. The lookup is now:"
+          grep -n 'Workshop.objects' "$file"
+      - name: Start a Celery worker
+        run: |
+          nohup uv run --no-sync celery -A config worker --loglevel=warning > ../celery.log 2>&1 &
+          for _ in $(seq 1 30); do
+            if uv run --no-sync celery -A config inspect ping --timeout 2 > /dev/null 2>&1; then
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "::error::The Celery worker did not start"
+          exit 1
+      - name: The load test must fail
+        # Without the lock the race is likely, but not certain, so allow three attempts.
+        run: |
+          for attempt in 1 2 3; do
+            if uv run --no-sync python scripts/load_test.py --workers 4 --threads 8; then
+              echo "Attempt $attempt passed without the lock."
+            else
+              echo "Attempt $attempt failed without the lock, as it should."
+              exit 0
+            fi
+          done
+          echo "::error::The load test passed 3 times without the row lock. It can no longer detect an oversell."
+          exit 1

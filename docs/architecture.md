@@ -403,7 +403,7 @@ How this is proven:
 
 - `tests/integration/test_seat_allocation.py::test_concurrent_registrations_never_oversell` fires 20 threads at a 5-seat workshop. It expects exactly 5 confirmed and 15 waitlisted. It runs against real PostgreSQL.
 - That test is the **only** proof that the real database lock exists. The fakes cannot prove it. Keep it, and do not delete it to save time.
-- A [load test](load-test.md) repeats the race over real HTTP: 200 simultaneous requests for 10 seats against gunicorn. It also shows what happens without the lock.
+- A [load test](load-test.md) repeats the race over real HTTP: 200 simultaneous requests for 10 seats against gunicorn. It also shows what happens without the lock. A GitHub Actions workflow runs it on pull requests that touch the seat code.
 - The runbook for a failure is [seats-oversold](runbooks/seats-oversold.md). A pooler in statement mode breaks row locks.
 
 ## 10. Data model
