@@ -1,0 +1,68 @@
+/* Semantic color tokens. Components use these through the colors in uno.config.ts. */
+:root {
+  color-scheme: light;
+
+  --c-canvas: oklch(98% 0.004 265);
+  --c-surface: oklch(100% 0 0);
+  --c-surface-raised: oklch(98.5% 0.004 265);
+  --c-border: oklch(90% 0.01 265);
+  --c-text: oklch(25% 0.02 265);
+  --c-text-muted: oklch(48% 0.02 265);
+
+  --c-primary: oklch(52% 0.2 265);
+  --c-primary-fg: oklch(100% 0 0);
+  --c-primary-subtle: oklch(95% 0.03 265);
+  --c-secondary: oklch(93% 0.01 265);
+  --c-secondary-fg: oklch(25% 0.02 265);
+
+  --c-success: oklch(45% 0.12 155);
+  --c-success-subtle: oklch(95% 0.04 155);
+  --c-warning: oklch(48% 0.11 75);
+  --c-warning-subtle: oklch(95% 0.05 85);
+  --c-danger: oklch(50% 0.19 27);
+  --c-danger-subtle: oklch(95% 0.03 27);
+}
+
+:root.dark {
+  color-scheme: dark;
+
+  --c-canvas: oklch(17% 0.02 265);
+  --c-surface: oklch(22% 0.02 265);
+  --c-surface-raised: oklch(26% 0.02 265);
+  --c-border: oklch(34% 0.02 265);
+  --c-text: oklch(95% 0.005 265);
+  --c-text-muted: oklch(74% 0.02 265);
+
+  --c-primary: oklch(68% 0.16 265);
+  --c-primary-fg: oklch(15% 0.02 265);
+  --c-primary-subtle: oklch(30% 0.06 265);
+  --c-secondary: oklch(32% 0.02 265);
+  --c-secondary-fg: oklch(95% 0.005 265);
+
+  --c-success: oklch(78% 0.14 155);
+  --c-success-subtle: oklch(30% 0.06 155);
+  --c-warning: oklch(80% 0.13 85);
+  --c-warning-subtle: oklch(32% 0.06 85);
+  --c-danger: oklch(75% 0.15 27);
+  --c-danger-subtle: oklch(30% 0.07 27);
+}
+
+:focus-visible {
+  outline: 2px solid var(--c-primary);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+body {
+  margin: 0;
+  background: var(--c-canvas);
+  color: var(--c-text);
+  font-family: system-ui, sans-serif;
+}
