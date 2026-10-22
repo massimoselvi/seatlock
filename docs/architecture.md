@@ -3,6 +3,7 @@
 How the Seatlock backend is built, why, and where new code goes.
 The decision is in [ADR 0005](adr/0005-clean-architecture-experiment.md). The two rules it protects are in [ADR 0001](adr/0001-row-locks-for-seat-allocation.md) (row locks) and [ADR 0002](adr/0002-enqueue-celery-tasks-on-commit.md) (tasks on commit).
 The diagrams use [Mermaid](https://mermaid.js.org/). GitHub and most editors render them.
+A second set, in the C4 model with one view per level and per flow, lives in [architecture/](architecture/README.md). It is the structural reference. This page holds the reasoning and the sequence diagrams.
 
 This document covers the backend. The Vue frontend talks to it only through the JSON API.
 

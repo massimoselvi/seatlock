@@ -43,6 +43,7 @@ Business rules live in `backend/domain/` (seat decisions) and `backend/applicati
 ## Documentation
 
 - [Backend architecture](docs/architecture.md): layers, request flows, concurrency, data model and testing, with diagrams
+- [C4 architecture diagrams](docs/architecture/README.md): context, containers, components, request flows and four deployments, built with Structurizr
 - [Load test](docs/load-test.md): 200 simultaneous registrations for 10 seats, with a control run that removes the lock
 - [ADRs](docs/adr/): row locks (0001), tasks on commit (0002), AWS target (0003), CDK (0004), clean architecture (0005), frontend styling (0006)
 - [Deploy and rollback](docs/deploy.md), [SLOs](docs/slo.md) and [runbooks](docs/runbooks/)
