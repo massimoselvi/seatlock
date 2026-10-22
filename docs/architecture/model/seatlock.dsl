@@ -1,9 +1,9 @@
 # The system, its containers and the components inside the three that hold code.
 
 seatlock = softwareSystem "Seatlock" "Workshops with limited seats. A seat is never sold twice, even when requests arrive at the same moment." {
-    # The path is relative to this file. The ADRs are listed by hand in documentation/04-decisions.md:
-    # the ADR importer reads our "Status:" line as Proposed and dates every ADR as today.
+    # The paths are relative to this file: docs/architecture/documentation and docs/architecture/adr.
     !docs ../documentation
+    !adrs ../adr
 
     spa = container "Single-page app" "Lists workshops, registers and cancels, shows the organizer dashboard. Light and dark theme." "Vue 3, TypeScript, Vite, UnoCSS" "Browser App" {
         url "https://github.com/massimoselvi/seatlock/tree/main/frontend"

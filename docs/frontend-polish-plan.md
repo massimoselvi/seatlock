@@ -1,7 +1,7 @@
 # Frontend polish plan
 
 Initial plan to improve the Vue frontend. It was planned on the branch `exp/frontend-polish`, now deleted.
-Status: implemented with UnoCSS and merged to `main` in PR #75. The decision is recorded in [ADR 0006](adr/0006-style-the-frontend-with-unocss.md). The text below is the original plan, kept for the record.
+Status: implemented with UnoCSS and merged to `main` in PR #75. The decision is recorded in [ADR 0006](architecture/adr/0006-style-the-frontend-with-unocss.md). The text below is the original plan, kept for the record.
 
 ## Current state
 
@@ -91,7 +91,7 @@ Recommendation:
 
 - Job-market goal: Tailwind v4, plus `unplugin-icons` (Iconify) if icons are needed.
 - Clean-code goal: Open Props with scoped CSS.
-Record the final choice as an ADR before step 1 of the order below. It became [ADR 0006](adr/0006-style-the-frontend-with-unocss.md).
+Record the final choice as an ADR before step 1 of the order below. It became [ADR 0006](architecture/adr/0006-style-the-frontend-with-unocss.md).
 
 ## Tailwind v4 steps (if chosen)
 

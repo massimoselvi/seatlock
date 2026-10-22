@@ -30,8 +30,24 @@ Direct pushes, force pushes and deletion of `main` are blocked by a repository r
 
 ## Architecture decisions
 
-A decision that is hard to reverse needs an ADR in `docs/adr/`. Number the files in order: `0001-title.md`.
+A decision that is hard to reverse needs an ADR in `docs/architecture/adr/`. Number the files in order: `0001-title.md`.
 An ADR states the context, the decision, the alternatives and the consequences.
+
+Start the file like this. The architecture viewer reads the first lines, so keep the shape:
+
+```markdown
+# 0007. Title of the decision
+
+Date: 2026-10-23
+
+## Status
+
+Accepted
+
+## Context
+```
+
+The status is one word: `Proposed`, `Accepted`, `Rejected` or `Superseded`. Details can follow on the same line.
 
 ## Local setup
 

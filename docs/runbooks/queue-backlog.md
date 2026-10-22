@@ -33,4 +33,4 @@ for w in Workshop.objects.all():
 
 ## 5. Follow up
 
-See [ADR 0002](../adr/0002-enqueue-celery-tasks-on-commit.md). A task can be lost if the process dies between commit and send. A periodic sweep that runs the loop above removes that gap.
+See [ADR 0002](../architecture/adr/0002-enqueue-celery-tasks-on-commit.md). A task can be lost if the process dies between commit and send. A periodic sweep that runs the loop above removes that gap.

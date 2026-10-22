@@ -1,6 +1,10 @@
-# 0003. Target AWS architecture
+# 3. Target AWS architecture
 
-Status: Accepted
+Date: 2026-10-21
+
+## Status
+
+Accepted
 
 ## Context
 
@@ -40,7 +44,7 @@ flowchart LR
 | Entry | CloudFront in front of an ALB, with the SPA in S3 | One domain, TLS, caching of static files. `/api/*` goes to the ALB. |
 | Email | SES | Waitlist promotion emails. |
 | Secrets | Secrets Manager, injected as task secrets | Nothing sensitive in the image or in environment files. |
-| Logs and alarms | CloudWatch | Alarms from [the SLO document](../slo.md). |
+| Logs and alarms | CloudWatch | Alarms from [the SLO document](../../slo.md). |
 | Network | One VPC, tasks and data in private subnets | Only the ALB is public. |
 
 ## Alternatives
@@ -62,14 +66,14 @@ flowchart LR
 | Failure | Effect | Mitigation |
 |---------|--------|------------|
 | One web task dies | Capacity drops | ALB health check, ECS replaces it, minimum 2 tasks |
-| Worker down | Waitlist not promoted | Queue backlog alarm, restart. See the [runbook](../runbooks/queue-backlog.md). |
+| Worker down | Waitlist not promoted | Queue backlog alarm, restart. See the [runbook](../../runbooks/queue-backlog.md). |
 | Database failover | About 1 to 2 minutes of errors | Multi-AZ, retry on the client |
 | Redis down | Cache and throttle fail, tasks wait | Replica, graceful fallback on cache errors |
 | Bad deploy | Errors rise | Rolling deploy with circuit breaker, rollback to the previous task definition |
 
 ## Monthly cost
 
-Details, assumptions and sources: [cost analysis](../cost-analysis.md). Prices are `eu-west-1`, on demand, USD, from the AWS Price List API (2026-10-20).
+Details, assumptions and sources: [cost analysis](../../cost-analysis.md). Prices are `eu-west-1`, on demand, USD, from the AWS Price List API (2026-10-20).
 
 | Setup | Low traffic | Expected | High |
 |-------|-------------|----------|------|

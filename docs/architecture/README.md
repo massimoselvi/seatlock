@@ -144,6 +144,7 @@ Dependencies point inward: interface, then infrastructure, then application, the
 | `styles.dsl` | Colors, shapes and line styles. Loads the AWS icon theme. |
 | `aws-tags.dsl` | The theme's tag names for the AWS services we use, as constants. |
 | `documentation/*.md` | The pages shown next to the diagrams in the viewer. |
+| `adr/*.md` | The architecture decision records. The viewer shows them on its Decisions page. |
 | `tools/` | The export tool and the checker. |
 
 Conventions:
@@ -176,7 +177,7 @@ Conventions:
 
 A new view needs an entry in this README: the checker fails otherwise.
 
-The inspector (`inspect` instead of `validate`) reports one finding on purpose: the system has no decisions. The importer reads the `Status:` line of our ADRs as "Proposed" and dates every ADR as today, so the decisions are listed by hand in `documentation/04-decisions.md`.
+The ADRs in `adr/` appear on the viewer's **Decisions** page. The viewer reads the date from a `Date: YYYY-MM-DD` line and the status from the first word under `## Status`. Without them it shows today's date and "Proposed". It lists decisions **newest first**, and nothing in the workspace changes that: the order is fixed in the viewer's own page script, by date and then by number. See [CONTRIBUTING.md](../../CONTRIBUTING.md#architecture-decisions) for the header an ADR needs.
 
 ## Other formats
 
