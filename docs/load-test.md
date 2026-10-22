@@ -127,6 +127,24 @@ docker compose exec -T web python scripts/load_test.py
 
 To repeat the control experiment, remove `.select_for_update()` in `infrastructure/db/repositories.py`, run the script with `--workers 4 --threads 8`, and revert the edit.
 
+## Continuous integration
+
+The workflow [.github/workflows/load-test.yml](../.github/workflows/load-test.yml) runs the same script in GitHub Actions, so a change to the lock fails a build.
+
+| | |
+|---|---|
+| **When** | By hand (`workflow_dispatch`, with inputs for users and seats), and on pull requests that touch `backend/domain`, `backend/application`, `backend/infrastructure`, `backend/config/settings.py`, the script or the workflow. |
+| **Where** | A GitHub runner with PostgreSQL 17 and Redis as service containers, and a Celery worker started in the background. The worker is needed for scenario C. |
+| **Matrix** | Two jobs: 4 workers x 1 thread (production-like) and 4 workers x 8 threads (up to 32 requests at once). |
+| **What fails the build** | Any broken invariant. Timings never fail it, so a slow runner cannot turn the job red. |
+| **Output** | A table in the job summary, and the JSON result and the worker log as an artifact. |
+
+**The control job.** A test that cannot fail proves nothing, so the workflow has a second job, `control-without-lock`. It removes `select_for_update()` from `DjangoWorkshopRepository.lock` and expects the load test to fail. It allows 3 attempts, because the race is likely but not certain, and it fails the build if the test passes 3 times without the lock. It runs only when you start the workflow by hand and tick `control`, so it does not slow pull requests. Run it after you change the script.
+
+The workflow was checked locally before the first run on GitHub: `act` parsed it and expanded the matrix, and a harness ran the job steps against a fresh database and an isolated Redis. In that run the real code passed all checks, and the lock-free code confirmed 29 people for 10 seats and failed.
+
+The job is not a required status check. A required check must report on every pull request, and a path-filtered workflow does not run on pull requests that touch other files. Making it required needs a small always-on wrapper job.
+
 ## Limits of this test
 
 - **One machine.** Docker Desktop on a laptop (10 CPUs, 16 GB for the VM), PostgreSQL 17, one Celery worker. The production target is two ECS tasks. The lock lives in PostgreSQL, so more tasks queue on the same lock, but this test did not run more than one gunicorn.
@@ -147,6 +165,5 @@ It is not fatal, and the server runs normally. The load test passes `--no-contro
 
 ## Ideas for later
 
-- Run the script in a `workflow_dispatch` GitHub Actions job against the compose stack, so a change to the lock fails a build.
 - Run two gunicorn processes in two containers against one database, to test several tasks.
 - Add a sustained scenario with many workshops and a mix of register and cancel calls.
