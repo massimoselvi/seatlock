@@ -6,7 +6,7 @@ Workshops and classes with limited seats - built so a seat can never be sold twi
 
 ## Why it's interesting
 
-- **No overselling under concurrency.** Registration locks the workshop row (`SELECT ... FOR UPDATE`) inside a transaction, so simultaneous requests are serialized. A test fires 20 threads at a 5-seat workshop and asserts exactly 5 confirmed and 15 waitlisted.
+- **No overselling under concurrency.** Registration locks the workshop row (`SELECT ... FOR UPDATE`) inside a transaction, so simultaneous requests are serialized. A test fires 20 threads at a 5-seat workshop and asserts exactly 5 confirmed and 15 waitlisted. A load test sends 200 simultaneous HTTP requests for 10 seats to a real gunicorn: exactly 10 are confirmed in 8 of 8 runs, while the same test on code without the lock confirmed up to 24 ([results](docs/load-test.md)).
 - **Database-level guarantees.** Check and partial unique constraints enforce positive capacity and one active registration per user per workshop, even if application code is bypassed.
 - **Waitlist with async promotion.** Cancelling a confirmed seat schedules a Celery task via `transaction.on_commit`, which promotes the oldest waitlisted person and emails them.
 - **Idempotent registration.** Retrying the same request returns the existing registration.
@@ -43,6 +43,7 @@ Business rules live in `backend/domain/` (seat decisions) and `backend/applicati
 ## Documentation
 
 - [Backend architecture](docs/architecture.md): layers, request flows, concurrency, data model and testing, with diagrams
+- [Load test](docs/load-test.md): 200 simultaneous registrations for 10 seats, with a control run that removes the lock
 - [ADRs](docs/adr/): row locks (0001), tasks on commit (0002), AWS target (0003), CDK (0004), clean architecture (0005), frontend styling (0006)
 - [Deploy and rollback](docs/deploy.md), [SLOs](docs/slo.md) and [runbooks](docs/runbooks/)
 
