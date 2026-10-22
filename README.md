@@ -10,6 +10,7 @@ Workshops and classes with limited seats - built so a seat can never be sold twi
 - **Database-level guarantees.** Check and partial unique constraints enforce positive capacity and one active registration per user per workshop, even if application code is bypassed.
 - **Waitlist with async promotion.** Cancelling a confirmed seat schedules a Celery task via `transaction.on_commit`, which promotes the oldest waitlisted person and emails them.
 - **Idempotent registration.** Retrying the same request returns the existing registration.
+- **Clean architecture around the seat rules.** The backend has four layers: domain, application, infrastructure and interface. Dependencies point inward. The seat rules are plain Python with no Django, so 32 tests run in about 0.1 s without a database, and a test fails the build on a forbidden import. The lock order, the after-commit side effects and the rollback behavior are tested with in-memory fakes. This was first an experiment (`exp/clean-arch-*`) and is now adopted: see [ADR 0005](docs/adr/0005-clean-architecture-experiment.md) for the evidence and the cost.
 
 ## Run it
 
@@ -33,16 +34,23 @@ docker compose run --rm web ruff check .
 
 ```
 backend/    Django project (config/) and four layers: domain, application, infrastructure, interface
-frontend/   Vue 3 + Vite + TypeScript
+frontend/   Vue 3 + Vite + TypeScript, styled with UnoCSS (ADR 0006)
 compose.yaml  db, redis, web, worker, frontend
 ```
 
 Business rules live in `backend/domain/` (seat decisions) and `backend/application/` (use cases), never in views, so they are easy to test without a database. See [docs/architecture.md](docs/architecture.md) for the layers, the request flows and the diagrams, and [ADR 0005](docs/adr/0005-clean-architecture-experiment.md) for the decision.
 
+## Documentation
+
+- [Backend architecture](docs/architecture.md): layers, request flows, concurrency, data model and testing, with diagrams
+- [ADRs](docs/adr/): row locks (0001), tasks on commit (0002), AWS target (0003), CDK (0004), clean architecture (0005), frontend styling (0006)
+- [Deploy and rollback](docs/deploy.md), [SLOs](docs/slo.md) and [runbooks](docs/runbooks/)
+
 ## Roadmap
 
 - [x] Models, constraints, seat allocation service, waitlist promotion task
 - [x] Read-only workshops API, Vue list page, CI
+- [x] Clean architecture for the backend ([ADR 0005](docs/adr/0005-clean-architecture-experiment.md))
 - [ ] Auth, register/cancel API endpoints and UI
 - [ ] Organizer dashboard
 - [ ] Rate limiting and caching on the public list
