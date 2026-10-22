@@ -42,7 +42,7 @@ Business rules live in `backend/domain/` (seat decisions) and `backend/applicati
 
 ## Architecture diagrams
 
-The architecture is drawn as a [C4 model](https://c4model.com/) with [Structurizr](https://docs.structurizr.com/). There are 23 views: system context, containers, the components of the app, the API and the worker, five request flows, and four deployments (Docker Compose, the AWS demo, AWS production and the CI load test). Components are colored by layer, so the dependency rule can be read from the picture.
+The architecture is drawn as a [C4 model](https://c4model.com/) with [Structurizr](https://docs.structurizr.com/). There are 23 views: system context, containers, the components of the app, the API and the worker, five request flows, and four deployments (Docker Compose, the AWS demo, AWS production and the CI load test), drawn with AWS service icons. Components are colored by layer, so the dependency rule can be read from the picture.
 
 ![Containers: the single-page app, the API, the worker, the database and Redis](docs/architecture/diagrams/containers.svg)
 
@@ -57,7 +57,7 @@ docker run --rm -p 8080:8080 -v "$PWD/docs/architecture":/usr/local/structurizr 
   structurizr/structurizr:2026.09.19 local
 ```
 
-Then open <http://localhost:8080>. The viewer needs only Docker. It does not need the rest of the stack, and port 8080 does not clash with it.
+Then open <http://localhost:8080>. The viewer needs Docker and internet access, because it downloads the AWS icon theme for the deployment views from GitHub when it starts. It does not need the rest of the stack, and port 8080 does not clash with it.
 
 Structurizr Lite was the tool this workspace was planned for. Its `structurizr/lite` image is now only a stub: it prints a deprecation notice and exits. The `local` command above is its maintained successor. It reads the same files and uses the same folder and port.
 

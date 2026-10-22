@@ -7,6 +7,9 @@ workspace "Seatlock" "Workshops with limited seats, built so a seat can never be
     # so a derived relationship would draw the API sending email.
     !impliedRelationships false
 
+    # Tag names from the AWS theme, used for the icons in the deployment views.
+    !include aws-tags.dsl
+
     model {
         !include model/context.dsl
         !include model/seatlock.dsl

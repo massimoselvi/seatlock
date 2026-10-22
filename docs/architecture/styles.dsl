@@ -1,3 +1,7 @@
+# The AWS icons come from the Structurizr AWS theme. It is fetched from GitHub when the workspace is read,
+# pinned to one commit so the icons cannot change under the diagrams. Needs internet access.
+themes https://raw.githubusercontent.com/structurizr/themes/67da2b503abc708f941e5aa2ea35dd553f742c3a/amazon-web-services-2023.01.31/theme.json
+
 styles {
     element "Person" {
         shape Person

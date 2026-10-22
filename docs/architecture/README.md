@@ -17,7 +17,7 @@ docker run --rm -p 8080:8080 -v "$PWD/docs/architecture":/usr/local/structurizr 
   structurizr/structurizr:2026.09.19 local
 ```
 
-Open <http://localhost:8080>. The first start writes `workspace.json` and `.structurizr/` in this folder. Git ignores both.
+Open <http://localhost:8080>. The first start writes `workspace.json` and `.structurizr/` in this folder. Git ignores both. It needs internet access: it downloads the AWS icon theme from GitHub when it reads the workspace.
 
 > **About Structurizr Lite.** The `structurizr/lite` image is the tool this workspace was planned for. Its latest tag is now a stub: it prints a deprecation notice and exits. The maintained replacement is the `local` command of `structurizr/structurizr`, used above. It takes the same folder, the same port and the same DSL. If you need the old tool, `structurizr/lite:2025.11.08` was the last working tag. It gets no updates.
 
@@ -141,7 +141,8 @@ Dependencies point inward: interface, then infrastructure, then application, the
 | `model/relationships.dsl` | Every relationship, by level. |
 | `model/deployment.dsl` | The four deployment environments. |
 | `views/*.dsl` | The views. |
-| `styles.dsl` | Colors, shapes and line styles. |
+| `styles.dsl` | Colors, shapes and line styles. Loads the AWS icon theme. |
+| `aws-tags.dsl` | The theme's tag names for the AWS services we use, as constants. |
 | `documentation/*.md` | The pages shown next to the diagrams in the viewer. |
 | `tools/` | The export tool and the checker. |
 
@@ -150,6 +151,7 @@ Conventions:
 - **Flat identifiers.** Every name is unique across the model, for example `registerUseCase`.
 - **No implied relationships** (`!impliedRelationships false`). Every relationship is written out. The API image also holds the code that runs in the worker, and a derived relationship would draw the API sending email.
 - **Relationship tags.** `Runtime` marks a call that exists only while a request runs. It is used by the dynamic views and hidden in the static ones. `Async` marks work done through the queue. `Implements` marks an adapter that implements a port. `Wiring` marks what the composition root picks. `Bypass` marks the Django admin.
+- **AWS icons.** The deployment views use the icons of the [Structurizr AWS theme](https://github.com/structurizr/themes/tree/master/amazon-web-services-2023.01.31). A node gets its icon from a tag, for example `"${AWS_CLOUDFRONT}"`. The tags are constants in `aws-tags.dsl`. To add an icon for another service, find its tag name in the theme's `theme.json`, add a `!const` line, and use it as the node's tag. The theme is read from GitHub, pinned to one commit, so the icons cannot change under the diagrams. The exported SVGs embed the icons, so they show on GitHub without loading anything. The icons belong to AWS and are used here only to draw the architecture.
 - **One level of detail per view.** A view with more than about 12 elements stops being readable, so the API components are split into an overview and three focused views.
 
 ## Change the diagrams
@@ -189,4 +191,4 @@ The same command with `-f mermaid`, `-f plantuml` or `-f json` gives those forma
 
 ## Checks in CI
 
-`.github/workflows/architecture.yml` runs on pull requests that touch this folder. It validates the workspace and runs `tools/check-diagrams.py`, which fails when a view has no image, an image has no view, or this page does not show a view. It does not redraw the images: the output changes a little on each run, so a diff would never be clean.
+`.github/workflows/architecture.yml` runs on pull requests that touch this folder. It validates the workspace (the runner downloads the icon theme, like any other start) and runs `tools/check-diagrams.py`, which fails when a view has no image, an image has no view, or this page does not show a view. It does not redraw the images: the output changes a little on each run, so a diff would never be clean.
