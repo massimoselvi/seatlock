@@ -1,6 +1,6 @@
 # Cost analysis
 
-Monthly cost of the architecture in [ADR 0003](adr/0003-target-aws-architecture.md), in USD, region `eu-west-1`.
+Monthly cost of the architecture in [ADR 0003](architecture/adr/0003-target-aws-architecture.md), in USD, region `eu-west-1`.
 
 - **Prices:** on demand, from the AWS Price List Bulk API, publication 2026-10-20.
 - **Model:** [cost/model.py](cost/model.py). Standard library only. Run `python3 docs/cost/model.py` to reproduce every number here.
@@ -86,7 +86,7 @@ For a demo, destroy it between sessions. Keep production running.
 ## Not modelled
 
 - **Savings Plans and Reserved Instances.** Commitments for Fargate and RDS can cut the fixed costs a lot. They need a stable load first. Price them with the AWS Pricing Calculator.
-- **Fargate Spot** for the worker. It has no fixed list price. The worker is safe to interrupt because promotions are idempotent ([ADR 0002](adr/0002-enqueue-celery-tasks-on-commit.md)). Test it in the demo.
+- **Fargate Spot** for the worker. It has no fixed list price. The worker is safe to interrupt because promotions are idempotent ([ADR 0002](architecture/adr/0002-enqueue-celery-tasks-on-commit.md)). Test it in the demo.
 - **Data transfer between zones**, charged per GB in each direction. Small here.
 - **Domain registration, taxes, support plans** and any free credits on the account.
 - **Growth in the database** beyond 20 GB, and backups above the free allowance (equal to the database size).

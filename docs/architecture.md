@@ -1,8 +1,9 @@
 # Backend architecture
 
 How the Seatlock backend is built, why, and where new code goes.
-The decision is in [ADR 0005](adr/0005-clean-architecture-experiment.md). The two rules it protects are in [ADR 0001](adr/0001-row-locks-for-seat-allocation.md) (row locks) and [ADR 0002](adr/0002-enqueue-celery-tasks-on-commit.md) (tasks on commit).
+The decision is in [ADR 0005](architecture/adr/0005-clean-architecture-experiment.md). The two rules it protects are in [ADR 0001](architecture/adr/0001-row-locks-for-seat-allocation.md) (row locks) and [ADR 0002](architecture/adr/0002-enqueue-celery-tasks-on-commit.md) (tasks on commit).
 The diagrams use [Mermaid](https://mermaid.js.org/). GitHub and most editors render them.
+A second set, in the C4 model with one view per level and per flow, lives in [architecture/](architecture/README.md). It is the structural reference. This page holds the reasoning and the sequence diagrams.
 
 This document covers the backend. The Vue frontend talks to it only through the JSON API.
 
@@ -65,7 +66,7 @@ flowchart LR
 | `db` | The single source of truth. Row locks serialize seat changes here. |
 | `redis` | Cache for the public list, rate-limit counters and the Celery broker. |
 
-The AWS target is described in [ADR 0003](adr/0003-target-aws-architecture.md).
+The AWS target is described in [ADR 0003](architecture/adr/0003-target-aws-architecture.md).
 
 ## 3. The four layers
 
@@ -365,7 +366,7 @@ sequenceDiagram
 
 Points to notice:
 
-- The queue message is sent only for a committed change ([ADR 0002](adr/0002-enqueue-celery-tasks-on-commit.md)). A rollback sends nothing.
+- The queue message is sent only for a committed change ([ADR 0002](architecture/adr/0002-enqueue-celery-tasks-on-commit.md)). A rollback sends nothing.
 - No promotion is queued when a **waitlisted** registration is cancelled, because no seat was freed.
 - Email is sent **after** the transaction closes. Mail is never sent for a change that is not saved.
 - Promotion is idempotent. Running it twice fills free seats once. It is safe to re-run after an outage ([queue backlog runbook](runbooks/queue-backlog.md)).
@@ -628,10 +629,10 @@ docker compose run --rm web python manage.py makemigrations workshops
 | **Django admin** | `infrastructure/db/admin.py` lets staff edit registrations directly. This bypasses the use cases and the lock. Treat admin edits of seats as a data fix, reviewed by a second person ([runbook](runbooks/seats-oversold.md)). |
 | **Status enum is still two lists** | The domain `RegistrationStatus` and the ORM `Registration.Status` are separate. `tests/test_status_mapping.py` fails the build if they drift apart. |
 | **Email can be lost** | It is sent after commit. A worker crash in between loses the email. The seat stays confirmed. |
-| **Task can be lost** | A crash between commit and enqueue loses the promotion ([ADR 0002](adr/0002-enqueue-celery-tasks-on-commit.md)). Re-run the recovery in the [queue backlog runbook](runbooks/queue-backlog.md). |
+| **Task can be lost** | A crash between commit and enqueue loses the promotion ([ADR 0002](architecture/adr/0002-enqueue-celery-tasks-on-commit.md)). Re-run the recovery in the [queue backlog runbook](runbooks/queue-backlog.md). |
 | **Architecture test sees imports only** | It cannot detect a business rule written in a view. Code review and `CODEOWNERS` cover that. |
 
-The full list with follow-ups is in [ADR 0005](adr/0005-clean-architecture-experiment.md#known-gaps-and-follow-ups).
+The full list with follow-ups is in [ADR 0005](architecture/adr/0005-clean-architecture-experiment.md#known-gaps-and-follow-ups).
 
 ## 17. Glossary
 

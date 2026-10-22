@@ -1,7 +1,7 @@
 # Infrastructure
 
-AWS CDK (Python) for the architecture in [ADR 0003](../docs/adr/0003-target-aws-architecture.md).
-Why CDK: [ADR 0004](../docs/adr/0004-infrastructure-as-code-with-aws-cdk.md).
+AWS CDK (Python) for the architecture in [ADR 0003](../docs/architecture/adr/0003-target-aws-architecture.md).
+Why CDK: [ADR 0004](../docs/architecture/adr/0004-infrastructure-as-code-with-aws-cdk.md).
 
 | Stack | Holds |
 |-------|-------|

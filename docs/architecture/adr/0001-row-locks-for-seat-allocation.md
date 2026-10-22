@@ -1,6 +1,10 @@
-# 0001. Use row locks for seat allocation
+# 1. Use row locks for seat allocation
 
-Status: Accepted
+Date: 2026-10-20
+
+## Status
+
+Accepted
 
 ## Context
 

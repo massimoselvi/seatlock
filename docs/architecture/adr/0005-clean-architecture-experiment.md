@@ -1,10 +1,14 @@
-# 0005. Clean Architecture for the backend
+# 5. Clean Architecture for the backend
 
-Status: **Accepted** (2026-10-22). It began as an experiment on the `exp/clean-arch-*` branches. The structure of `exp/clean-arch-4-interface` is now the backend structure.
+Date: 2026-10-22
+
+## Status
+
+Accepted (2026-10-22). It began as an experiment on the `exp/clean-arch-*` branches. The structure of `exp/clean-arch-4-interface` is now the backend structure.
 
 This ADR keeps its original file name so that existing links stay valid.
 It moves the code that [ADR 0001](0001-row-locks-for-seat-allocation.md) and [ADR 0002](0002-enqueue-celery-tasks-on-commit.md) describe. Both decisions still stand.
-How the code works is in [docs/architecture.md](../architecture.md).
+How the code works is in [docs/architecture.md](../../architecture.md).
 
 ## Context
 
@@ -114,7 +118,7 @@ The experiment's first verdict advised against adopting the full layering on cos
 
 ## Consequences
 
-- New code goes where [docs/architecture.md](../architecture.md) says. The PR template and `CODEOWNERS` point at the new paths.
+- New code goes where [docs/architecture.md](../../architecture.md) says. The PR template and `CODEOWNERS` point at the new paths.
 - ADR 0001 and ADR 0002 stay valid. Their file references now point at `domain/`, `application/` and `infrastructure/db/repositories.py`.
 - The concurrency test is the only proof of the real lock. Keep it, and do not delete it for speed.
 - `exp/clean-arch-lite` is closed as an alternative. The tag `archive/clean-arch-lite` keeps its code. The follow-up experiment `exp/clean-arch-6-lite-uow` is dropped, because the full variant already has the unit-of-work port.

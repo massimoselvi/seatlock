@@ -1,6 +1,10 @@
-# 0006. Style the frontend with UnoCSS and the antfu toolchain
+# 6. Style the frontend with UnoCSS and the antfu toolchain
 
-Status: Accepted (2026-10-22)
+Date: 2026-10-22
+
+## Status
+
+Accepted (2026-10-22)
 
 ## Context
 

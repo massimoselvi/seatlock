@@ -20,7 +20,7 @@ HAVING COUNT(*) > w.capacity;
 
 ## 3. Investigate
 
-- Check recent deploys. Does every path that changes seat counts still lock the workshop first (`DjangoWorkshopRepository.lock`) inside a unit of work? See [ADR 0001](../adr/0001-row-locks-for-seat-allocation.md).
+- Check recent deploys. Does every path that changes seat counts still lock the workshop first (`DjangoWorkshopRepository.lock`) inside a unit of work? See [ADR 0001](../architecture/adr/0001-row-locks-for-seat-allocation.md).
 - Look for writes that bypass the use cases in `application/workshops/services.py`: admin actions, shell sessions, data fixes.
 - Check that the database is not behind a pooler in statement mode, which breaks row locks.
 

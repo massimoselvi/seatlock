@@ -1,6 +1,10 @@
-# 0002. Enqueue Celery tasks on commit
+# 2. Enqueue Celery tasks on commit
 
-Status: Accepted
+Date: 2026-10-20
+
+## Status
+
+Accepted
 
 ## Context
 

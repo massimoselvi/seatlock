@@ -1,6 +1,10 @@
-# 0004. Infrastructure as code with AWS CDK
+# 4. Infrastructure as code with AWS CDK
 
-Status: Accepted
+Date: 2026-10-21
+
+## Status
+
+Accepted
 
 ## Context
 

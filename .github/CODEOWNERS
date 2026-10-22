@@ -4,4 +4,4 @@
 /backend/infrastructure/db/repositories.py @massimoselvi
 /backend/infrastructure/db/unit_of_work.py @massimoselvi
 /infra/ @massimoselvi
-/docs/adr/ @massimoselvi
+/docs/architecture/adr/ @massimoselvi

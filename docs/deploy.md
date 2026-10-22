@@ -1,7 +1,7 @@
 # Deploy and rollback
 
 How to ship Seatlock to AWS and how to undo a release.
-Architecture: [ADR 0003](adr/0003-target-aws-architecture.md). Infrastructure code: [infra/](../infra/README.md).
+Architecture: [ADR 0003](architecture/adr/0003-target-aws-architecture.md). Infrastructure code: [infra/](../infra/README.md).
 
 > Nothing in this guide has been run against a real AWS account yet. Treat the first deploy as a dry run in a throwaway account and fix the guide with what you learn.
 > A one-day demo run costs about 3 ([cost analysis](cost-analysis.md)). Destroy it afterwards.
@@ -120,7 +120,7 @@ Old and new code run side by side during a deploy, and rollback runs old code on
 
 - **Expand release:** add columns and tables as nullable or with defaults. Never rename or drop in the same release.
 - **Contract release:** drop or rename only after no running code reads the old shape.
-- Any change to seat-count logic keeps `select_for_update()` inside `transaction.atomic` ([ADR 0001](adr/0001-row-locks-for-seat-allocation.md)).
+- Any change to seat-count logic keeps `select_for_update()` inside `transaction.atomic` ([ADR 0001](architecture/adr/0001-row-locks-for-seat-allocation.md)).
 
 ## Rollback
 

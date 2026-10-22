@@ -1,0 +1,12 @@
+{
+  "name": "seatlock-architecture-tools",
+  "private": true,
+  "type": "module",
+  "description": "Renders the Structurizr views to SVG. See ../README.md.",
+  "scripts": {
+    "export": "node export-diagrams.mjs"
+  },
+  "dependencies": {
+    "playwright-core": "^1.64.1"
+  }
+}
