@@ -5,19 +5,19 @@ deploymentEnvironment "Development" {
         devBrowserNode = deploymentNode "Web browser" "Runs the single-page app." "Chrome, Firefox or Safari" {
             devSpa = containerInstance spa
         }
-        deploymentNode "Docker Compose" "docker compose up --build" "Docker Compose" {
-            devVite = infrastructureNode "frontend" "Vite dev server on port 5173. Proxies /api to web." "node:22-alpine, pnpm dev"
-            deploymentNode "web" "Applies migrations, then runs the Django dev server on port 8000. The load test runs inside it." "python:3.13, runserver" {
+        deploymentNode "Docker Compose" "docker compose up --build" "Docker Compose" "Logo Docker" {
+            devVite = infrastructureNode "frontend" "Vite dev server on port 5173. Proxies /api to web." "node:22-alpine, pnpm dev" "Logo Vite"
+            deploymentNode "web" "Applies migrations, then runs the Django dev server on port 8000. The load test runs inside it." "python:3.13, runserver" "Logo Python" {
                 devApi = containerInstance api
                 devLoadTest = containerInstance loadTest
             }
-            deploymentNode "worker" "Takes tasks from Redis database 0." "python:3.13, celery worker" {
+            deploymentNode "worker" "Takes tasks from Redis database 0." "python:3.13, celery worker" "Logo Celery" {
                 devWorker = containerInstance worker
             }
-            deploymentNode "db" "Volume pgdata. Port 5432." "postgres:17-alpine" {
+            deploymentNode "db" "Volume pgdata. Port 5432." "postgres:17-alpine" "Logo PostgreSQL" {
                 devDb = containerInstance database
             }
-            deploymentNode "redis" "Broker is database 0. Cache is database 1." "redis:7-alpine" {
+            deploymentNode "redis" "Broker is database 0. Cache is database 1." "redis:7-alpine" "Logo Redis" {
                 devRedis = containerInstance redis
             }
             devMail = infrastructureNode "Console email backend" "Prints the promotion email to the web and worker logs." "Django EMAIL_BACKEND"
@@ -133,28 +133,28 @@ deploymentEnvironment "AWS Production" {
 }
 
 deploymentEnvironment "CI" {
-    deploymentNode "GitHub" "Runs the workflows on every pull request." "github.com" {
-        deploymentNode "Backend job" "ci.yml. ruff, migrations check, deploy check, pytest with coverage. The frontend job runs pnpm run ci. The infra job runs ruff, pytest and cdk synth." "GitHub-hosted runner, ubuntu-latest" {
-            deploymentNode "PostgreSQL service (backend job)" "postgres:17-alpine" "Service container" {
-                ciBackendDb = containerInstance database
-            }
+    deploymentNode "GitHub" "Runs the workflows on every pull request." "github.com" "Logo GitHub" {
+        deploymentNode "Backend job" "ci.yml. Runs on every pull request. The frontend job runs pnpm run ci. The infra job runs ruff, pytest and cdk synth." "GitHub-hosted runner, ubuntu-latest" "Logo GitHub Actions" {
+            ciPytest = infrastructureNode "pytest" "ruff, the migrations check, the deploy check, then the backend tests with coverage." "pytest" "Logo Python"
+            ciBackendDb = infrastructureNode "PostgreSQL service" "A database for the tests only. The load test job has its own." "postgres:17-alpine, service container" "Logo PostgreSQL"
         }
-        deploymentNode "Load test job" "load-test.yml. Runs on pull requests that touch seat code and by hand. Two jobs: 4 workers x 1 thread and 4 workers x 8 threads." "GitHub-hosted runner, ubuntu-latest" {
-            deploymentNode "gunicorn" "Started by the script on a free port." "gunicorn" {
+        deploymentNode "Load test job" "load-test.yml. Runs on pull requests that touch seat code and by hand. Two jobs: 4 workers x 1 thread and 4 workers x 8 threads." "GitHub-hosted runner, ubuntu-latest" "Logo GitHub Actions" {
+            deploymentNode "gunicorn" "Started by the script on a free port." "gunicorn" "Logo Gunicorn" {
                 ciApi = containerInstance api
             }
-            deploymentNode "celery worker" "Started in the background. Scenario C needs it." "Celery" {
+            deploymentNode "celery worker" "Started in the background. Scenario C needs it." "Celery" "Logo Celery" {
                 ciWorker = containerInstance worker
             }
-            deploymentNode "PostgreSQL service" "postgres:17-alpine" "Service container" {
+            deploymentNode "PostgreSQL service" "postgres:17-alpine" "Service container" "Logo PostgreSQL" {
                 ciDb = containerInstance database
             }
-            deploymentNode "Redis service" "redis:7-alpine" "Service container" {
+            deploymentNode "Redis service" "redis:7-alpine" "Service container" "Logo Redis" {
                 ciRedis = containerInstance redis
             }
-            deploymentNode "load_test.py" "Fires the requests, checks the database, writes a summary and an artifact." "Python" {
+            deploymentNode "load_test.py" "Fires the requests, checks the database, writes a summary and an artifact." "Python" "Logo Python" {
                 ciLoadTest = containerInstance loadTest
             }
         }
     }
+    ciPytest -> ciBackendDb "Runs the tests against" "SQL"
 }

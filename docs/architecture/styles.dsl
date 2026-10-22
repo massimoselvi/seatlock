@@ -72,6 +72,35 @@ styles {
         strokeWidth 4
     }
 
+    # Logos for the Docker Compose and CI deployment views. See icons/README.md.
+    element "Logo Docker" {
+        icon icons/docker.svg
+    }
+    element "Logo PostgreSQL" {
+        icon icons/postgresql.svg
+    }
+    element "Logo Redis" {
+        icon icons/redis.svg
+    }
+    element "Logo Python" {
+        icon icons/python.svg
+    }
+    element "Logo Celery" {
+        icon icons/celery.svg
+    }
+    element "Logo Gunicorn" {
+        icon icons/gunicorn.svg
+    }
+    element "Logo Vite" {
+        icon icons/vite.svg
+    }
+    element "Logo GitHub" {
+        icon icons/github.svg
+    }
+    element "Logo GitHub Actions" {
+        icon icons/githubactions.svg
+    }
+
     element "Deployment Node" {
         background #ffffff
         color #0f172a

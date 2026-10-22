@@ -142,6 +142,7 @@ Dependencies point inward: interface, then infrastructure, then application, the
 | `model/deployment.dsl` | The four deployment environments. |
 | `views/*.dsl` | The views. |
 | `styles.dsl` | Colors, shapes and line styles. Loads the AWS icon theme. |
+| `icons/` | Logos for the Docker Compose and CI views. |
 | `aws-tags.dsl` | The theme's tag names for the AWS services we use, as constants. |
 | `documentation/*.md` | The pages shown next to the diagrams in the viewer. |
 | `adr/*.md` | The architecture decision records. The viewer shows them on its Decisions page. |
@@ -153,6 +154,8 @@ Conventions:
 - **No implied relationships** (`!impliedRelationships false`). Every relationship is written out. The API image also holds the code that runs in the worker, and a derived relationship would draw the API sending email.
 - **Relationship tags.** `Runtime` marks a call that exists only while a request runs. It is used by the dynamic views and hidden in the static ones. `Async` marks work done through the queue. `Implements` marks an adapter that implements a port. `Wiring` marks what the composition root picks. `Bypass` marks the Django admin.
 - **AWS icons.** The deployment views use the icons of the [Structurizr AWS theme](https://github.com/structurizr/themes/tree/master/amazon-web-services-2023.01.31). A node gets its icon from a tag, for example `"${AWS_CLOUDFRONT}"`. The tags are constants in `aws-tags.dsl`. To add an icon for another service, find its tag name in the theme's `theme.json`, add a `!const` line, and use it as the node's tag. The theme is read from GitHub, pinned to one commit, so the icons cannot change under the diagrams. The exported SVGs embed the icons, so they show on GitHub without loading anything. The icons belong to AWS and are used here only to draw the architecture.
+- **Logos in the Docker Compose and CI views.** The AWS theme only has AWS icons, so these views use the logos in `icons/` (from [Simple Icons](https://simpleicons.org/), CC0, with the brand color added). A node gets one from a tag such as `"Logo Docker"`, and `styles.dsl` maps each tag to its file. To add one, put the SVG in `icons/` and add an `element "Logo X"` style with its `icon`. The file is embedded when the workspace is read, so these logos need no internet access.
+- **A container deployed twice is related twice.** Structurizr draws every relationship to every instance of a container. When one place only looks like a second copy, as the test database in the CI backend job does, model it as an infrastructure node with its own connection.
 - **One level of detail per view.** A view with more than about 12 elements stops being readable, so the API components are split into an overview and three focused views.
 
 ## Change the diagrams
