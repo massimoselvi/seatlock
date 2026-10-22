@@ -134,7 +134,7 @@ backend/
     organizer/                 staff dashboard endpoints
     accounts/                  sign-up, login, logout, me
     health.py                  liveness check
-  tests/                       unit/ integration/ api/ config/ test_architecture.py
+  tests/                       unit/ integration/ api/ config/ test_architecture.py test_status_mapping.py
 ```
 
 Two details keep the move invisible to the database and the queue:
@@ -518,11 +518,12 @@ The structure exists to make the right tests cheap.
 | `tests/unit/domain` | 13 | nothing | Seat rules and status changes on plain objects. |
 | `tests/unit/application` | 13 | nothing | Use cases against in-memory fakes: order, side effects, rollback. |
 | `tests/test_architecture.py` | 6 | nothing | The layer rules, and that the checker catches a violation. |
+| `tests/test_status_mapping.py` | 3 | nothing | The domain statuses and the ORM statuses are the same list. |
 | `tests/integration` | 4 | PostgreSQL | Real repositories and unit of work. The 20-thread concurrency test. |
 | `tests/api` | 29 | PostgreSQL (all but the health check) | HTTP contract: status codes, auth, throttling, cache. |
 | `tests/config` | 8 | Django settings; 2 also use the database | Production settings and the admin flag. |
 
-The first three groups run without a database, in about 0.1 s together (32 tests). The full suite takes about 17 s, almost all of it in the database tests.
+The first four groups run without a database, in about 0.1 s together (35 tests). The full suite takes about 17 s, almost all of it in the database tests.
 
 ```mermaid
 flowchart LR
@@ -530,6 +531,7 @@ flowchart LR
         d["unit/domain<br/>13"]
         a["unit/application<br/>13"]
         arch["architecture<br/>6"]
+        map["status mapping<br/>3"]
     end
     subgraph slow["Mostly real PostgreSQL, seconds"]
         i["integration<br/>4"]
@@ -624,8 +626,7 @@ docker compose run --rm web python manage.py makemigrations workshops
 | Item | Detail |
 |------|--------|
 | **Django admin** | `infrastructure/db/admin.py` lets staff edit registrations directly. This bypasses the use cases and the lock. Treat admin edits of seats as a data fix, reviewed by a second person ([runbook](runbooks/seats-oversold.md)). |
-| **Status enum duplicated** | The domain `RegistrationStatus` and the ORM `Registration.Status` are two lists with no test that compares them. A status added only to the model raises `ValueError` at runtime. |
-| **`seats_left` computed twice** | `WorkshopSerializer.get_seats_left` repeats `Workshop.free_seats`. |
+| **Status enum is still two lists** | The domain `RegistrationStatus` and the ORM `Registration.Status` are separate. `tests/test_status_mapping.py` fails the build if they drift apart. |
 | **Email can be lost** | It is sent after commit. A worker crash in between loses the email. The seat stays confirmed. |
 | **Task can be lost** | A crash between commit and enqueue loses the promotion ([ADR 0002](adr/0002-enqueue-celery-tasks-on-commit.md)). Re-run the recovery in the [queue backlog runbook](runbooks/queue-backlog.md). |
 | **Architecture test sees imports only** | It cannot detect a business rule written in a view. Code review and `CODEOWNERS` cover that. |
