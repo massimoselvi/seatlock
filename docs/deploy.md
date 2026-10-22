@@ -11,7 +11,8 @@ Architecture: [ADR 0003](adr/0003-target-aws-architecture.md). Infrastructure co
 - AWS CLI v2 with credentials for the target account, region `eu-west-1`.
 - Docker with `buildx`, `jq`, Node 22, and `uv`.
 - CDK bootstrapped once per account and region: `npx aws-cdk@2.1146.0 bootstrap aws://<account>/eu-west-1`.
-- The pinned CloudFront prefix list is right for the region. This must print the same ID as `CLOUDFRONT_ORIGIN_PREFIX_LISTS` in `infra/seatlock_infra/network_stack.py`:
+- The preflight script passes. It only reads from AWS: it checks the account, the region, the Fargate quota, name clashes, a budget and the prefix list below. Run it with the profile and the account ID you mean to use: `infra/scripts/preflight.sh <profile> <account-id>`. It stops at once if you are signed in to the wrong account.
+- The pinned CloudFront prefix list is right for the region. The preflight script checks it. By hand, this must print the same ID as `CLOUDFRONT_ORIGIN_PREFIX_LISTS` in `infra/seatlock_infra/network_stack.py`:
 
   ```bash
   aws ec2 describe-managed-prefix-lists --region eu-west-1 \
