@@ -11,6 +11,13 @@ Architecture: [ADR 0003](adr/0003-target-aws-architecture.md). Infrastructure co
 - AWS CLI v2 with credentials for the target account, region `eu-west-1`.
 - Docker with `buildx`, `jq`, Node 22, and `uv`.
 - CDK bootstrapped once per account and region: `npx aws-cdk@2.1146.0 bootstrap aws://<account>/eu-west-1`.
+- The pinned CloudFront prefix list is right for the region. This must print the same ID as `CLOUDFRONT_ORIGIN_PREFIX_LISTS` in `infra/seatlock_infra/network_stack.py`:
+
+  ```bash
+  aws ec2 describe-managed-prefix-lists --region eu-west-1 \
+    --filters Name=prefix-list-name,Values=com.amazonaws.global.cloudfront.origin-facing \
+    --query "PrefixLists[0].PrefixListId" --output text
+  ```
 
 Helper used below. It reads a stack output:
 
@@ -26,8 +33,11 @@ The ECS services need an image in ECR. The `bootstrap` flag creates every resour
 
 ```bash
 cd infra && uv sync
-npx aws-cdk@2.1146.0 deploy --all -c env=$ENVNAME -c bootstrap=true -c alarm_email=you@example.com
+npx aws-cdk@2.1146.0 deploy --all -c env=$ENVNAME -c bootstrap=true -c alarm_email=you@example.com \
+  -c destroy_by=2026-12-31   # optional: a DestroyBy tag on every resource
 ```
+
+The load balancer accepts traffic only from CloudFront. Use the CloudFront URL (`SiteUrl`) for every request, including smoke tests and load tests.
 
 Then ship a release (next section) and finish with a normal deploy, without `bootstrap`, to start the tasks.
 

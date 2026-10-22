@@ -12,6 +12,16 @@ from .network_stack import NetworkStack
 ENV = cdk.Environment(region="eu-west-1")
 
 
+def _tag(app: cdk.App, config: Config) -> None:
+    """Tags show the cost and make cleanup checkable: list everything with Project=seatlock."""
+    tags = cdk.Tags.of(app)
+    tags.add("Project", "seatlock")
+    tags.add("Env", config.name)
+    tags.add("ManagedBy", "cdk")
+    if destroy_by := app.node.try_get_context("destroy_by"):
+        tags.add("DestroyBy", str(destroy_by))
+
+
 @dataclass(frozen=True)
 class Stacks:
     network: NetworkStack
@@ -26,4 +36,5 @@ def build(app: cdk.App, config: Config) -> Stacks:
     data = DataStack(app, f"{prefix}-Data", config=config, network=network, env=ENV)
     application = AppStack(app, f"{prefix}-App", config=config, network=network, data=data, env=ENV)
     frontend = FrontendStack(app, f"{prefix}-Frontend", config=config, alb=application.alb, env=ENV)
+    _tag(app, config)
     return Stacks(network, data, application, frontend)

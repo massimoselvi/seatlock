@@ -3,6 +3,7 @@ import pytest
 from aws_cdk.assertions import Match, Template
 
 from seatlock_infra.config import DEMO, PROD
+from seatlock_infra.network_stack import CLOUDFRONT_ORIGIN_PREFIX_LISTS
 from seatlock_infra.stacks import build
 
 
@@ -114,6 +115,49 @@ def test_site_bucket_is_private_and_api_is_routed_to_the_load_balancer(demo):
                 {"CacheBehaviors": [Match.object_like({"PathPattern": "/api/*"})]}
             )
         },
+    )
+
+
+def test_load_balancer_accepts_traffic_only_from_cloudfront(demo):
+    network = demo["network"]
+    from_cloudfront = network.find_resources(
+        "AWS::EC2::SecurityGroupIngress", {"Properties": {"Description": "CloudFront to ALB"}}
+    )
+    ((_, rule),) = from_cloudfront.items()
+    assert rule["Properties"]["SourcePrefixListId"] == CLOUDFRONT_ORIGIN_PREFIX_LISTS["eu-west-1"]
+    assert (rule["Properties"]["FromPort"], rule["Properties"]["ToPort"]) == (80, 80)
+
+    # The group itself holds no inline rule, and no ingress rule in the stack is open to the world.
+    group = network.find_resources(
+        "AWS::EC2::SecurityGroup",
+        {"Properties": {"GroupDescription": Match.string_like_regexp("^ALB")}},
+    )
+    ((_, alb),) = group.items()
+    assert "SecurityGroupIngress" not in alb["Properties"]
+    every_rule = network.find_resources("AWS::EC2::SecurityGroupIngress")
+    assert not any({"CidrIp", "CidrIpv6"} & set(r["Properties"]) for r in every_rule.values())
+
+
+def test_resources_are_tagged_for_cost_and_cleanup(demo):
+    # CloudFormation lists tags in alphabetical order.
+    demo["network"].has_resource_properties(
+        "AWS::EC2::VPC",
+        {
+            "Tags": Match.array_with(
+                [
+                    {"Key": "Env", "Value": "demo"},
+                    {"Key": "ManagedBy", "Value": "cdk"},
+                    {"Key": "Project", "Value": "seatlock"},
+                ]
+            )
+        },
+    )
+
+
+def test_destroy_by_tag_is_added_when_given():
+    stacks = build(cdk.App(context={"destroy_by": "2026-10-23"}), DEMO)
+    Template.from_stack(stacks.network).has_resource_properties(
+        "AWS::EC2::VPC", {"Tags": Match.array_with([{"Key": "DestroyBy", "Value": "2026-10-23"}])}
     )
 
 

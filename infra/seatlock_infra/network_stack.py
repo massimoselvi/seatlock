@@ -4,6 +4,14 @@ from constructs import Construct
 
 from .config import Config
 
+# CloudFront reaches the ALB from addresses in an AWS-managed prefix list. The list ID differs by
+# region and cannot be looked up at synth time without an account, so it is pinned here.
+# Check or refresh it with:
+#   aws ec2 describe-managed-prefix-lists --region <region> \
+#     --filters Name=prefix-list-name,Values=com.amazonaws.global.cloudfront.origin-facing \
+#     --query "PrefixLists[0].PrefixListId" --output text
+CLOUDFRONT_ORIGIN_PREFIX_LISTS = {"eu-west-1": "pl-4fa04526"}
+
 
 class NetworkStack(Stack):
     """VPC and the three security groups. Data is reachable only from the app group."""
@@ -39,9 +47,17 @@ class NetworkStack(Stack):
         )
         self.data_subnets = ec2.SubnetSelection(subnet_group_name="data")
 
-        self.alb_sg = ec2.SecurityGroup(self, "AlbSg", vpc=self.vpc, description="Public ALB")
-        self.alb_sg.add_ingress_rule(ec2.Peer.any_ipv4(), ec2.Port.tcp(80), "HTTP")
-        self.alb_sg.add_ingress_rule(ec2.Peer.any_ipv4(), ec2.Port.tcp(443), "HTTPS")
+        # The ALB has a public address, but only CloudFront may reach it. Nothing listens on 443
+        # yet, so there is no rule for it.
+        prefix_list_id = CLOUDFRONT_ORIGIN_PREFIX_LISTS.get(self.region)
+        if prefix_list_id is None:
+            raise ValueError(f"No CloudFront prefix list for region {self.region}. Add it above.")
+        self.alb_sg = ec2.SecurityGroup(
+            self, "AlbSg", vpc=self.vpc, description="ALB, reachable from CloudFront only"
+        )
+        self.alb_sg.add_ingress_rule(
+            ec2.Peer.prefix_list(prefix_list_id), ec2.Port.tcp(80), "CloudFront to ALB"
+        )
 
         self.app_sg = ec2.SecurityGroup(self, "AppSg", vpc=self.vpc, description="web and worker")
         self.app_sg.add_ingress_rule(self.alb_sg, ec2.Port.tcp(8000), "ALB to web")
