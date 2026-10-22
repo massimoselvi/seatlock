@@ -12,7 +12,7 @@ Closes #
 
 - [ ] Acceptance criteria in the issue are met
 - [ ] Tests added or updated
-- [ ] Business rules are in `services.py`, not in views
+- [ ] Business rules are in `domain/` or `application/`, not in views or infrastructure
 - [ ] Seat-count changes lock the Workshop row and have a concurrency test
 - [ ] Migrations included and `makemigrations --check` is clean
 - [ ] Docs or ADR updated if a decision changed

@@ -22,11 +22,11 @@ Impact: waitlisted users are not promoted after a cancel. Seat counts stay corre
 
 ## 4. Recover missed promotions
 
-`promote_waitlisted` is idempotent. After the queue is healthy, run it for each workshop that has free seats and a waitlist:
+The `promote_waitlist` task is idempotent. After the queue is healthy, run it for each workshop that has free seats and a waitlist:
 
 ```python
-from workshops.models import Workshop
-from workshops.tasks import promote_waitlist
+from infrastructure.db.models import Workshop
+from infrastructure.messaging.tasks import promote_waitlist
 for w in Workshop.objects.all():
     promote_waitlist.delay(w.pk)
 ```

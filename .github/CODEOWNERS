@@ -1,4 +1,7 @@
 * @massimoselvi
-/backend/workshops/services.py @massimoselvi
+/backend/domain/ @massimoselvi
+/backend/application/ @massimoselvi
+/backend/infrastructure/db/repositories.py @massimoselvi
+/backend/infrastructure/db/unit_of_work.py @massimoselvi
 /infra/ @massimoselvi
 /docs/adr/ @massimoselvi

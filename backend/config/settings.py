@@ -25,7 +25,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "rest_framework.authtoken",
-    "workshops",
+    "infrastructure.db",  # label "workshops": keeps table names and migration history
 ]
 
 MIDDLEWARE = [
