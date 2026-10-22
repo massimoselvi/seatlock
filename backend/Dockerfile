@@ -21,4 +21,6 @@ ENV RUFF_CACHE_DIR=/tmp/.ruff_cache \
     PYTEST_ADDOPTS="-o cache_dir=/tmp/.pytest_cache"
 USER app
 
-CMD ["gunicorn", "config.wsgi", "--bind", "0.0.0.0:8000"]
+# The app user has no home directory, and gunicorn 26 opens a control socket under $HOME by default.
+# Without this flag every start logs "Control server error: Permission denied".
+CMD ["gunicorn", "config.wsgi", "--bind", "0.0.0.0:8000", "--no-control-socket"]

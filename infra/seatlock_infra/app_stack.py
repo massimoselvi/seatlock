@@ -16,7 +16,12 @@ from .network_stack import NetworkStack
 
 # Migrations are not run here. Several tasks starting together must not race on them.
 # They run once per release as a one-off task (see docs/deploy.md).
-WEB_COMMAND = "exec gunicorn config.wsgi --bind 0.0.0.0:8000 --workers 2 --access-logfile -"
+# --no-control-socket: the app user has no home directory, so the default socket under $HOME
+# fails to open and every start logs an error.
+WEB_COMMAND = (
+    "exec gunicorn config.wsgi --bind 0.0.0.0:8000 --workers 2 --access-logfile - "
+    "--no-control-socket"
+)
 WORKER_COMMAND = "exec celery -A config worker --loglevel=info"
 
 
