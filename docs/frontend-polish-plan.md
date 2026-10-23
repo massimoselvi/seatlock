@@ -18,7 +18,7 @@ It works, but it looks like an unstyled default.
 
 1. Make the UI look designed, with small visible changes per step.
 2. Keep all behavior and API calls unchanged.
-3. Keep the code easy to explain (portfolio project).
+3. Keep the code easy to explain (reference project).
 
 ## Improvements
 

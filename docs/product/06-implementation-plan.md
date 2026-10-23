@@ -33,7 +33,7 @@ flowchart LR
     A["A. Dry run and<br/>release path<br/>14.1 h"] --> B["B. Observability<br/>13.0 h"]
     B --> C["C. Edge security<br/>25.2 h"]
     C --> D["D. Auth and<br/>data integrity<br/>13.0 h"]
-    D --> E["E. Resilience and<br/>portfolio polish<br/>13.0 h"]
+    D --> E["E. Resilience and<br/>polish<br/>13.0 h"]
     E --> R(["v0.6 release<br/>2026-12-09"])
 ```
 
@@ -104,7 +104,7 @@ A phase is done when its exit check in section 3 holds.
 | Local (Compose) | Development and the load test | `docker compose up --build` |
 | CI | Every pull request | Checks, and the load test when domain, application or infrastructure change |
 | AWS sandbox | The dry run, then destroyed | Gates in section 6; budget 10 USD |
-| Public demo | Portfolio | **Not before phase C.** Fake data only. Needs an answer to PRD question Q1. |
+| Public demo | Showing the project | **Not before phase C.** Fake data only. Needs an answer to PRD question Q1. |
 
 Rollback: for code, revert the pull request. For the cloud, follow the rollback part of [deploy.md](../deploy.md).
 

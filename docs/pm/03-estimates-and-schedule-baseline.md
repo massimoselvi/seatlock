@@ -4,7 +4,7 @@
 |---|---|
 | Version | 1.0, issued 2026-10-23 |
 | State | **Approved baseline**, 2026-10-23 |
-| Scope | Milestone v0.6 Hardening and three added items. Everything before 2026-10-23 is reported as actuals. |
+| Scope | Milestone v0.6 Hardening and three added items. Everything before 2026-10-23 is reported as actuals. The source code is delivered on 2026-10-23 ([CR-011](05-change-request-log.md#cr-011)); the work below is the release **after** delivery. |
 | Capacity | 15 productive hours a week (assumption A1 in the [charter](01-project-charter.md#7-assumptions-constraints-dependencies)) |
 
 ## 1. Completed work: plan and actual
@@ -60,7 +60,7 @@ Packages follow the [implementation plan](../product/06-implementation-plan.md).
 | D1 | Token expiry and one token per device, with an ADR | #57 | Technology | 6 | 10 | 20 | 11.0 | 2.3 | 2026-11-18 | 2026-11-24 |
 | D2 | CHECK constraint on registration status | #85 | Technology | 1 | 2 | 3 | 2.0 | 0.3 | 2026-11-24 | 2026-11-24 |
 | E1 | Sweep for lost promotions and emails | #86 | Technology | 4 | 8 | 16 | 8.7 | 2.0 | 2026-11-24 | 2026-11-27 |
-| E2 | Portfolio polish: screenshots, load test on AWS, demo notes | #87 | Product | 2 | 4 | 8 | 4.3 | 1.0 | 2026-11-27 | 2026-12-01 |
+| E2 | Polish: screenshots, load test on AWS, demo notes | #87 | Product | 2 | 4 | 8 | 4.3 | 1.0 | 2026-11-27 | 2026-12-01 |
 | | **Total** | | | | | | **78.2** | **4.7** | 2026-10-26 | 2026-12-01 |
 
 Totals: **78.2 h** expected. P80 (E + 0.84 SD) is 82.2 h. The 20% reserve adds 15.7 h, for **93.9 h** with reserve.
@@ -77,7 +77,7 @@ One person works the packages in sequence, so the schedule is driven by capacity
 | B | Observability | 13.0 | 2026-10-30 | 2026-11-06 |
 | C | Edge security | 25.2 | 2026-11-06 | 2026-11-18 |
 | D | Auth and data integrity | 13.0 | 2026-11-18 | 2026-11-24 |
-| E | Resilience and portfolio polish | 13.0 | 2026-11-24 | 2026-12-01 |
+| E | Resilience and polish | 13.0 | 2026-11-24 | 2026-12-01 |
 
 ```mermaid
 gantt
@@ -117,6 +117,7 @@ gantt
 | M3 | Edge security | 2026-11-18 | The ALB, CloudFront, headers, WAF, Redis auth and logs are hardened. No public demo before this. |
 | M4 | Auth and data integrity | 2026-11-24 | Tokens expire and are per device. The database constrains the status. |
 | M5 | Resilience and polish | 2026-12-01 | Lost promotions are swept. The AWS result is shown in the README. |
+| D | **v1.0 Source delivery** | **2026-10-23** | Done. The code, tests and documents on `main`. Open gaps are the v0.6 issues. |
 | R | **v0.6 released (baseline)** | **2026-12-09** | M5 plus the 20% reserve. This is the committed date. |
 
 The target is 2026-12-01. The committed baseline date is **2026-12-09**. The difference is the reserve.

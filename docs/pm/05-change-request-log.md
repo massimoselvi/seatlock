@@ -80,7 +80,7 @@ flowchart TD
 
 ## 5. Log
 
-All ten entries below were decided during the first week (2026-10-20 to 2026-10-23). The change process was written on day 4, so they are **recorded afterwards** from the pull requests and the repository history. Effort is not given: hours were not recorded.
+All eleven entries below were decided during the first week (2026-10-20 to 2026-10-23). The change process was written on day 4, so they are **recorded afterwards** from the pull requests and the repository history. Effort is not given: hours were not recorded.
 
 | ID | Date | Title | Type | Priority | Size | Decision | Status | Links |
 |----|------|-------|------|----------|:----:|----------|--------|-------|
@@ -94,6 +94,7 @@ All ten entries below were decided during the first week (2026-10-20 to 2026-10-
 | [CR-008](#cr-008) | 2026-10-23 | Replace Structurizr Lite with `structurizr local` | Tooling | Must | S | Approved | Implemented | #83 |
 | [CR-009](#cr-009) | 2026-10-23 | Add a C4 model of the system | Scope | Should | L | Approved | Implemented | #83 |
 | [CR-010](#cr-010) | 2026-10-23 | Move the ADRs into the C4 folder | Scope | Could | S | Approved | Implemented | #83 |
+| [CR-011](#cr-011) | 2026-10-23 | Deliver the source code on 2026-10-23, move hardening after delivery | Schedule | Must | M | Approved | Implemented | #88 |
 
 ### CR-001
 **Change.** After a first review, add a milestone v0.5 Security with six pull requests: login rate limit, fail-closed `SECRET_KEY`, production settings, cache key, `/admin` off the internet, non-root container, restricted CI token.
@@ -155,9 +156,15 @@ All ten entries below were decided during the first week (2026-10-20 to 2026-10-
 **Impact.** Scope: file moves, 27 links updated. Schedule: under an hour. Cost: none. Risk: broken links, checked by a link checker. Quality: neutral.
 **Alternatives.** Keep both copies. Rejected: they drift.
 
+### CR-011
+**Change.** Add a delivery milestone v1.0 on 2026-10-23. Deliver the code, tests and documents on `main` as they are. Milestone v0.6 Hardening stays a separate release after delivery, with its baseline of 2026-12-09.
+**Reason.** The sponsor must hand over the source code today. The remaining work is 78.2 expected hours, about 94 with the reserve. It cannot be done in one day without dropping the dry run on AWS, which the plan puts first.
+**Impact.** Scope: O3 (deployed once) and O4 (hardened) are not met at delivery and are listed as known limits. Schedule: delivery is 2026-10-23. v0.6 dates do not move. Cost: none. Risk: R5 rises if the code is shared as a ready service; the README must say the deploy guide was not run on AWS and which hardening issues are open. Quality: no change.
+**Alternatives.** Pull a subset (A1, A2) into today. Rejected: it adds risk on the day of delivery for little gain. Move all dates earlier. Rejected: the estimate does not allow it.
+
 ## 6. Observations
 
-- Six of ten changes are **Scope** and three of those are documents or diagrams. This is risk R4. The [workstream cap](06-workstream-structure.md#capacity-rule) now limits it.
+- Six of eleven changes are **Scope** and three of those are documents or diagrams. This is risk R4. The [workstream cap](06-workstream-structure.md#capacity-rule) now limits it.
 - Only CR-001, CR-005 and CR-006 are **Must**. They address security and correctness, and are the changes that reduce risk.
 - No CR was rejected or deferred. This is a sign that the process was not used as a gate yet. From now on a CR is raised **before** the work starts.
 
