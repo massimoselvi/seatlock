@@ -23,13 +23,13 @@ A security audit on 2026-10-23 found these gaps:
 4. **Token lifetime.** `ExpiringTokenAuthentication` rejects tokens older than `AUTH_TOKEN_TTL_HOURS` (default 168). Sign-in replaces an expired token and reuses a live one.
 5. **Sign-in limits per username** (10 per minute) on top of the per-address limit.
 6. **Immutable image tags.** The ECR repository is immutable and `image_tag` is required, except for the bootstrap deploy.
-7. **Production only:** AWS WAF managed rule groups and ALB access logs on the ALB, ALB deletion protection.
+7. **Production only:** AWS WAF on the ALB with two managed rule groups (known bad inputs, common rules), ALB access logs and ALB deletion protection. The WAF starts in count mode. After a week of metrics with no false positives, set `waf_block=True` in `config.py`. The IP reputation group is left out: the ALB sees CloudFront addresses, not viewer addresses.
 8. **Data in transit:** Redis requires an AUTH token and PostgreSQL connections use `sslmode=require`.
 
 ## Alternatives
 
 - **HTTPS between CloudFront and the ALB.** Better, but it needs a domain and a certificate (issue #47). The secret header is the interim control.
-- **WAF on CloudFront.** It must live in `us-east-1`, which means a second stack and region. A rate rule on the ALB sees only CloudFront addresses, and the forwarded-IP key can be spoofed. Rate limits stay in the application.
+- **WAF on CloudFront.** It sees the viewer address, so it supports rate rules and IP reputation. It must live in `us-east-1`, which means a second stack and region. This is the better design and is tracked as a follow-up. A rate rule on the ALB sees only CloudFront addresses, and the forwarded-IP key can be spoofed. Until then, rate limits stay in the application.
 - **httpOnly session cookie instead of a token in `localStorage`.** It removes token theft by script, but it adds CSRF handling and a larger change to the client. The CSP and short lifetime reduce the risk for now.
 
 ## Consequences

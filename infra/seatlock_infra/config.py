@@ -15,6 +15,8 @@ class Config:
     alarm_email: str | None = None
     bootstrap: bool = False
     waf: bool = False
+    # False: WAF rules only count matches. Read the metrics for a week, then set True to block.
+    waf_block: bool = False
     alb_logs: bool = False
 
     @property
