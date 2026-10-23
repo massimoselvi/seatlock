@@ -16,7 +16,9 @@ User = get_user_model()
 
 def make_workshop(capacity: int) -> Workshop:
     return Workshop.objects.create(
-        title="Intro to Django", starts_at=timezone.now(), capacity=capacity
+        title="Intro to Django",
+        starts_at=timezone.now() + timezone.timedelta(days=1),
+        capacity=capacity,
     )
 
 

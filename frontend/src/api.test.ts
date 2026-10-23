@@ -42,4 +42,10 @@ describe('api', () => {
     vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(new Response('nope', { status: 502 }))))
     await expect(register(1)).rejects.toThrow('API error 502')
   })
+
+  it('treats an HTML page with status 200 as a failure, not as data', async () => {
+    // CloudFront once answered API 403 and 404 with index.html and status 200.
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(new Response('<!doctype html>', { status: 200 }))))
+    await expect(register(1)).rejects.toThrow('Unexpected response from the server.')
+  })
 })

@@ -71,3 +71,49 @@ def test_me_and_logout(client):
 
 def test_workshops_list_stays_public(client):
     assert client.get("/api/workshops/").status_code == 200
+
+
+def _age_token(hours):
+    from datetime import timedelta
+
+    from django.utils import timezone
+    from rest_framework.authtoken.models import Token
+
+    Token.objects.update(created=timezone.now() - timedelta(hours=hours))
+
+
+def _login(client, remote_addr="127.0.0.1", **overrides):
+    payload = {"username": "ada", "password": PASSWORD} | overrides
+    return client.post(
+        "/api/auth/login/", payload, content_type="application/json", REMOTE_ADDR=remote_addr
+    )
+
+
+def test_expired_token_is_rejected_and_removed(client, settings):
+    from rest_framework.authtoken.models import Token
+
+    settings.AUTH_TOKEN_TTL_HOURS = 24
+    token = signup(client).json()["token"]
+    _age_token(hours=25)
+    response = client.get("/api/auth/me/", HTTP_AUTHORIZATION=f"Token {token}")
+    assert response.status_code == 401
+    assert not Token.objects.filter(key=token).exists()
+
+
+def test_login_reuses_a_live_token_and_replaces_an_expired_one(client, settings):
+    settings.AUTH_TOKEN_TTL_HOURS = 24
+    first = signup(client).json()["token"]
+    assert _login(client).json()["token"] == first
+    _age_token(hours=25)
+    fresh = _login(client).json()["token"]
+    assert fresh != first
+    assert client.get("/api/auth/me/", HTTP_AUTHORIZATION=f"Token {fresh}").status_code == 200
+
+
+def test_login_is_throttled_per_username_across_addresses(client):
+    codes = [
+        _login(client, f"10.0.0.{n}", username="victim", password="wrong").status_code
+        for n in range(12)
+    ]
+    assert codes[:10] == [400] * 10
+    assert 429 in codes[10:]

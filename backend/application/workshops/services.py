@@ -3,6 +3,9 @@
 No Django here. Everything the use cases touch arrives through the ports in `interfaces.py`.
 """
 
+from collections.abc import Callable
+from datetime import UTC, datetime
+
 from domain.workshops.entities import Registration
 
 from .dto import RegistrationResult
@@ -17,9 +20,15 @@ from .interfaces import (
 class RegisterForWorkshop:
     """Confirm a seat if one is free, otherwise join the waitlist. Idempotent."""
 
-    def __init__(self, uow: UnitOfWork, list_cache: WorkshopListCache) -> None:
+    def __init__(
+        self,
+        uow: UnitOfWork,
+        list_cache: WorkshopListCache,
+        clock: Callable[[], datetime] = lambda: datetime.now(UTC),
+    ) -> None:
         self.uow = uow
         self.list_cache = list_cache
+        self.clock = clock
 
     def execute(self, *, user_id: int, workshop_id: int) -> RegistrationResult:
         with self.uow:
@@ -29,12 +38,14 @@ class RegisterForWorkshop:
             if existing:
                 return RegistrationResult.from_entity(existing, workshop.title)
 
+            workshop.ensure_open(self.clock())
             confirmed = self.uow.registrations.count_confirmed(workshop.id)
+            waitlisted = self.uow.registrations.count_waitlisted(workshop.id)
             registration = self.uow.registrations.add(
                 Registration(
                     workshop_id=workshop.id,
                     user_id=user_id,
-                    status=workshop.status_for_new_registration(confirmed),
+                    status=workshop.status_for_new_registration(confirmed, waitlisted),
                 )
             )
             self.uow.on_commit(self.list_cache.invalidate)

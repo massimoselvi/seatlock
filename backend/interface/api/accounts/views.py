@@ -5,13 +5,14 @@ rules. Wrapping them in use cases and repositories would add files and no protec
 """
 
 from rest_framework import generics, permissions, status
-from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
+from .authentication import issue_token
 from .serializers import SignupSerializer, UserSerializer
+from .throttles import LoginUsernameThrottle
 
 
 class SignupView(generics.CreateAPIView):
@@ -25,7 +26,7 @@ class SignupView(generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
-        token, _ = Token.objects.get_or_create(user=user)
+        token = issue_token(user)
         return Response(
             {"token": token.key, "user": UserSerializer(user).data},
             status=status.HTTP_201_CREATED,
@@ -43,12 +44,18 @@ class LogoutView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
-        Token.objects.filter(user=request.user).delete()
+        request.auth.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class LoginView(ObtainAuthToken):
     """DRF's own view switches throttling off, which leaves passwords open to guessing."""
 
-    throttle_classes = [ScopedRateThrottle]
+    throttle_classes = [ScopedRateThrottle, LoginUsernameThrottle]
     throttle_scope = "login"
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        token = issue_token(serializer.validated_data["user"])
+        return Response({"token": token.key})

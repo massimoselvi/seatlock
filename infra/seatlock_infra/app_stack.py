@@ -6,12 +6,15 @@ from aws_cdk import aws_ecr as ecr
 from aws_cdk import aws_ecs as ecs
 from aws_cdk import aws_elasticloadbalancingv2 as elbv2
 from aws_cdk import aws_logs as logs
+from aws_cdk import aws_s3 as s3
 from aws_cdk import aws_sns as sns
 from aws_cdk import aws_sns_subscriptions as subscriptions
+from aws_cdk import aws_wafv2 as wafv2
 from constructs import Construct
 
 from .config import Config
 from .data_stack import DB_NAME, DB_USER, DataStack
+from .edge import ORIGIN_VERIFY_HEADER
 from .network_stack import NetworkStack
 
 # Migrations are not run here. Several tasks starting together must not race on them.
@@ -39,6 +42,7 @@ class AppStack(Stack):
         **kwargs,
     ) -> None:
         super().__init__(scope, id, **kwargs)
+        self.config = config
         removal = RemovalPolicy.RETAIN if config.protect_data else RemovalPolicy.DESTROY
 
         self.repository = ecr.Repository(
@@ -46,6 +50,8 @@ class AppStack(Stack):
             "Backend",
             repository_name="seatlock-backend",
             image_scan_on_push=True,
+            # A tag is a release. It never moves, so a rollback runs the code that was tested.
+            image_tag_mutability=ecr.TagMutability.IMMUTABLE,
             removal_policy=removal,
             empty_on_delete=not config.protect_data,
             lifecycle_rules=[ecr.LifecycleRule(max_image_count=20)],
@@ -55,7 +61,8 @@ class AppStack(Stack):
         redis_host = data.redis_endpoint
         environment = {
             "DEBUG": "false",
-            # The ALB health check calls the task by IP, so host filtering happens at the edge.
+            # The ALB health check calls the task by IP, so Django cannot filter hosts. The ALB
+            # forwards only requests that carry the CloudFront secret header, which replaces it.
             "ALLOWED_HOSTS": "*",
             "ADMIN_ENABLED": "false",
             # Flip to "true" with the HTTPS listener from issue #47. Until then the ALB hop is HTTP.
@@ -65,12 +72,12 @@ class AppStack(Stack):
             "DB_HOST": data.database.db_instance_endpoint_address,
             "DB_NAME": DB_NAME,
             "DB_USER": DB_USER,
-            "CELERY_BROKER_URL": f"rediss://{redis_host}:6379/0?ssl_cert_reqs=required",
-            "CACHE_URL": f"rediss://{redis_host}:6379/1",
+            "REDIS_HOST": redis_host,
         }
         secrets = {
             "SECRET_KEY": ecs.Secret.from_secrets_manager(data.django_secret),
             "DB_PASSWORD": ecs.Secret.from_secrets_manager(data.db_secret, "password"),
+            "REDIS_PASSWORD": ecs.Secret.from_secrets_manager(data.redis_secret),
         }
 
         web = self._task(
@@ -100,13 +107,29 @@ class AppStack(Stack):
             internet_facing=True,
             security_group=network.alb_sg,
             vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PUBLIC),
+            deletion_protection=config.protect_data,
         )
-        listener = self.alb.add_listener("Http", port=80, open=False)
+        # Anything without the CloudFront secret header gets a 403, including other CloudFront
+        # distributions, which share the address list the security group allows.
+        listener = self.alb.add_listener(
+            "Http",
+            port=80,
+            open=False,
+            default_action=elbv2.ListenerAction.fixed_response(
+                403, content_type="text/plain", message_body="Forbidden"
+            ),
+        )
         target_group = listener.add_targets(
             "Web",
             port=8000,
             protocol=elbv2.ApplicationProtocol.HTTP,
             targets=[self.web_service],
+            priority=10,
+            conditions=[
+                elbv2.ListenerCondition.http_header(
+                    ORIGIN_VERIFY_HEADER, [data.origin_secret.secret_value.unsafe_unwrap()]
+                )
+            ],
             health_check=elbv2.HealthCheck(path="/api/health/", healthy_http_codes="200"),
             deregistration_delay=Duration.seconds(30),
         )
@@ -122,6 +145,10 @@ class AppStack(Stack):
         )
 
         self._alarms(config, data, target_group)
+        if config.alb_logs:
+            self._access_logs(removal)
+        if config.waf:
+            self._waf()
 
         # Used by docs/deploy.md so the release steps need no console lookups.
         CfnOutput(self, "RepositoryUri", value=self.repository.repository_uri)
@@ -130,12 +157,68 @@ class AppStack(Stack):
         CfnOutput(self, "WorkerServiceName", value=worker_service.service_name)
         CfnOutput(self, "WebTaskFamily", value=web.family)
 
+    def _access_logs(self, removal):
+        bucket = s3.Bucket(
+            self,
+            "AlbLogs",
+            block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
+            encryption=s3.BucketEncryption.S3_MANAGED,
+            enforce_ssl=True,
+            removal_policy=removal,
+            lifecycle_rules=[s3.LifecycleRule(expiration=Duration.days(90))],
+        )
+        self.alb.log_access_logs(bucket)
+
+    def _waf(self):
+        """AWS managed rule groups on the ALB. Rate limits stay in the app (see ADR 0007)."""
+
+        def group(priority, name):
+            return wafv2.CfnWebACL.RuleProperty(
+                name=name,
+                priority=priority,
+                override_action=wafv2.CfnWebACL.OverrideActionProperty(none={}),
+                statement=wafv2.CfnWebACL.StatementProperty(
+                    managed_rule_group_statement=wafv2.CfnWebACL.ManagedRuleGroupStatementProperty(
+                        vendor_name="AWS", name=name
+                    )
+                ),
+                visibility_config=self._waf_visibility(name),
+            )
+
+        acl = wafv2.CfnWebACL(
+            self,
+            "WebAcl",
+            scope="REGIONAL",
+            default_action=wafv2.CfnWebACL.DefaultActionProperty(allow={}),
+            visibility_config=self._waf_visibility("seatlock"),
+            rules=[
+                group(1, "AWSManagedRulesAmazonIpReputationList"),
+                group(2, "AWSManagedRulesKnownBadInputsRuleSet"),
+                group(3, "AWSManagedRulesCommonRuleSet"),
+            ],
+        )
+        wafv2.CfnWebACLAssociation(
+            self,
+            "WebAclAssociation",
+            resource_arn=self.alb.load_balancer_arn,
+            web_acl_arn=acl.attr_arn,
+        )
+
+    @staticmethod
+    def _waf_visibility(name):
+        return wafv2.CfnWebACL.VisibilityConfigProperty(
+            cloud_watch_metrics_enabled=True, metric_name=name, sampled_requests_enabled=True
+        )
+
     def _task(self, name, *, cpu, memory, command, env, secrets, port=None):
         task = ecs.FargateTaskDefinition(self, f"{name}Task", cpu=cpu, memory_limit_mib=memory)
         # DATABASE_URL is built at start-up so the password never sits in the task definition.
         script = (
-            "export DATABASE_URL=postgres://$DB_USER:$DB_PASSWORD@$DB_HOST:5432/$DB_NAME && "
-            + command
+            "export DATABASE_URL=postgres://$DB_USER:$DB_PASSWORD@$DB_HOST:5432/$DB_NAME"
+            "?sslmode=require && "
+            "export CELERY_BROKER_URL=rediss://:$REDIS_PASSWORD@$REDIS_HOST:6379/0"
+            "?ssl_cert_reqs=required && "
+            "export CACHE_URL=rediss://:$REDIS_PASSWORD@$REDIS_HOST:6379/1 && " + command
         )
         container = task.add_container(
             name.lower(),
@@ -153,7 +236,14 @@ class AppStack(Stack):
 
     @property
     def _tag(self) -> str:
-        return self.node.try_get_context("image_tag") or "latest"
+        tag = self.node.try_get_context("image_tag")
+        if tag:
+            return tag
+        if self.config.bootstrap:
+            return "bootstrap"  # no tasks run yet, so no image is pulled
+        raise ValueError(
+            "Pass -c image_tag=<git sha>. Tags are immutable and there is no 'latest'."
+        )
 
     def _service(self, name, cluster, task, network, config, *, desired):
         return ecs.FargateService(

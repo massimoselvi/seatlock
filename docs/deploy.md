@@ -39,6 +39,13 @@ npx aws-cdk@2.1146.0 deploy --all -c env=$ENVNAME -c bootstrap=true -c alarm_ema
 ```
 
 The load balancer accepts traffic only from CloudFront. Use the CloudFront URL (`SiteUrl`) for every request, including smoke tests and load tests.
+After the first deploy, check the edge controls (ADR 0007):
+
+```bash
+curl -si "http://$ALB_DNS/api/health/" | head -1          # 403: no secret header
+curl -si "$SITE/api/workshops/999999/register/" -X POST | head -1   # 401 or 404, never 200
+curl -sI "$SITE/" | grep -i 'content-security-policy\|strict-transport'
+```
 
 Then ship a release (next section) and finish with a normal deploy, without `bootstrap`, to start the tasks.
 
@@ -77,7 +84,7 @@ TD_ARN=$(aws ecs register-task-definition --cli-input-json "$NEW_TD" \
 
 TASK=$(aws ecs run-task --cluster "$CLUSTER" --launch-type FARGATE --task-definition "$TD_ARN" \
   --network-configuration "awsvpcConfiguration={subnets=[$SUBNETS],securityGroups=[$SG],assignPublicIp=$PUBLIC_IP}" \
-  --overrides '{"containerOverrides":[{"name":"web","command":["sh","-c","export DATABASE_URL=postgres://$DB_USER:$DB_PASSWORD@$DB_HOST:5432/$DB_NAME && python manage.py migrate --noinput"]}]}' \
+  --overrides '{"containerOverrides":[{"name":"web","command":["sh","-c","export DATABASE_URL=postgres://$DB_USER:$DB_PASSWORD@$DB_HOST:5432/$DB_NAME?sslmode=require && python manage.py migrate --noinput"]}]}' \
   --query 'tasks[0].taskArn' --output text)
 
 aws ecs wait tasks-stopped --cluster "$CLUSTER" --tasks "$TASK"

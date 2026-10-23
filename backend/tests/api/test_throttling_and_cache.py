@@ -13,7 +13,9 @@ pytestmark = pytest.mark.django_db
 
 @pytest.fixture
 def workshop():
-    return Workshop.objects.create(title="Async Python", starts_at=timezone.now(), capacity=5)
+    return Workshop.objects.create(
+        title="Async Python", starts_at=timezone.now() + timezone.timedelta(days=1), capacity=5
+    )
 
 
 @pytest.fixture
@@ -40,7 +42,9 @@ def test_workshop_list_is_cached_until_seats_change(
     assert first["results"][0]["seats_left"] == 5
 
     # A direct write does not invalidate the cache: the old page is still served.
-    Workshop.objects.create(title="Another", starts_at=timezone.now(), capacity=1)
+    Workshop.objects.create(
+        title="Another", starts_at=timezone.now() + timezone.timedelta(days=1), capacity=1
+    )
     assert client.get("/api/workshops/").json()["count"] == 1
 
     # A seat change invalidates it after commit.
@@ -56,7 +60,9 @@ def test_cache_is_not_invalidated_on_rollback(workshop, user):
     client.get("/api/workshops/")
     with pytest.raises(WorkshopNotFound):
         container.register_for_workshop().execute(user_id=user.pk, workshop_id=9999)
-    Workshop.objects.create(title="Another", starts_at=timezone.now(), capacity=1)
+    Workshop.objects.create(
+        title="Another", starts_at=timezone.now() + timezone.timedelta(days=1), capacity=1
+    )
     assert client.get("/api/workshops/").json()["count"] == 1
 
 
@@ -77,10 +83,10 @@ def test_invalid_page_is_not_cached_and_answers_normally(workshop):
     assert client.get("/api/workshops/?page=-1").status_code == 404
 
 
-def post_login(client, **extra):
+def post_login(client, username="nobody", **extra):
     return client.post(
         "/api/auth/login/",
-        {"username": "nobody", "password": "wrong"},
+        {"username": username, "password": "wrong"},
         content_type="application/json",
         **extra,
     )
@@ -110,6 +116,7 @@ def test_different_real_clients_have_separate_limits(client, settings):
     for _ in range(10):
         post_login(client, HTTP_X_FORWARDED_FOR="203.0.113.7, 10.0.0.1")
 
-    other = post_login(client, HTTP_X_FORWARDED_FOR="198.51.100.9, 10.0.0.1")
+    # A different username too: the per-username limit is separate from the per-address one.
+    other = post_login(client, "someone-else", HTTP_X_FORWARDED_FOR="198.51.100.9, 10.0.0.1")
 
     assert other.status_code == 400

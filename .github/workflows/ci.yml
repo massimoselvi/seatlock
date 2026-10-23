@@ -76,5 +76,5 @@ jobs:
       - run: uv run ruff format --check .
       - run: uv run pytest
       # Needs no AWS credentials. Checks that both environments synthesize.
-      - run: npx --yes aws-cdk@2.1146.0 synth --quiet
-      - run: npx --yes aws-cdk@2.1146.0 synth --quiet --context env=prod
+      - run: npx --yes aws-cdk@2.1146.0 synth --quiet -c image_tag=ci
+      - run: npx --yes aws-cdk@2.1146.0 synth --quiet --context env=prod -c image_tag=ci

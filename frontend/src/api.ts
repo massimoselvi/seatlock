@@ -61,6 +61,9 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const body = await response.json().catch(() => null)
   if (!response.ok)
     throw new ApiError(response.status, messageFrom(body, response.status))
+  // Every API success is JSON. An HTML page here means a proxy answered in place of the API.
+  if (body === null)
+    throw new ApiError(response.status, 'Unexpected response from the server.')
   return body as T
 }
 

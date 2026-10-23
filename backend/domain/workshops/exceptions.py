@@ -10,5 +10,9 @@ class RegistrationNotFound(DomainError):
     pass
 
 
+class WorkshopClosed(DomainError):
+    """The workshop has started, so nobody can join it any more."""
+
+
 class InvalidStatusTransition(DomainError):
     pass

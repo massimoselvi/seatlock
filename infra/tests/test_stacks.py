@@ -8,7 +8,7 @@ from seatlock_infra.stacks import build
 
 
 def synth(config):
-    stacks = build(cdk.App(), config)
+    stacks = build(cdk.App(context={"image_tag": "test"}), config)
     return {
         "network": Template.from_stack(stacks.network),
         "data": Template.from_stack(stacks.data),
@@ -88,8 +88,8 @@ def test_tasks_get_secrets_from_secrets_manager_not_plain_environment(demo):
         container = definition["Properties"]["ContainerDefinitions"][0]
         secret_names = {s["Name"] for s in container["Secrets"]}
         env_names = {e["Name"] for e in container["Environment"]}
-        assert {"SECRET_KEY", "DB_PASSWORD"} <= secret_names
-        assert not {"SECRET_KEY", "DB_PASSWORD"} & env_names
+        assert {"SECRET_KEY", "DB_PASSWORD", "REDIS_PASSWORD"} <= secret_names
+        assert not {"SECRET_KEY", "DB_PASSWORD", "REDIS_PASSWORD"} & env_names
 
 
 def test_load_balancer_checks_the_health_endpoint(demo):
@@ -155,7 +155,7 @@ def test_resources_are_tagged_for_cost_and_cleanup(demo):
 
 
 def test_destroy_by_tag_is_added_when_given():
-    stacks = build(cdk.App(context={"destroy_by": "2026-10-23"}), DEMO)
+    stacks = build(cdk.App(context={"destroy_by": "2026-10-23", "image_tag": "test"}), DEMO)
     Template.from_stack(stacks.network).has_resource_properties(
         "AWS::EC2::VPC", {"Tags": Match.array_with([{"Key": "DestroyBy", "Value": "2026-10-23"}])}
     )
@@ -203,3 +203,135 @@ def test_admin_paths_are_blocked_at_the_load_balancer(demo):
             ],
         },
     )
+
+
+def test_api_errors_are_not_replaced_by_the_single_page_app(demo):
+    """A distribution-wide error page turned API 403 and 404 into 200 with HTML."""
+    config = demo["frontend"].find_resources("AWS::CloudFront::Distribution")
+    ((_, cdn),) = config.items()
+    assert "CustomErrorResponses" not in cdn["Properties"]["DistributionConfig"]
+    demo["frontend"].has_resource_properties(
+        "AWS::CloudFront::Distribution",
+        {
+            "DistributionConfig": Match.object_like(
+                {
+                    "DefaultCacheBehavior": Match.object_like(
+                        {
+                            "FunctionAssociations": [
+                                Match.object_like({"EventType": "viewer-request"})
+                            ]
+                        }
+                    )
+                }
+            )
+        },
+    )
+
+
+def test_security_headers_are_sent_on_site_and_api(demo):
+    demo["frontend"].has_resource_properties(
+        "AWS::CloudFront::ResponseHeadersPolicy",
+        {
+            "ResponseHeadersPolicyConfig": Match.object_like(
+                {
+                    "SecurityHeadersConfig": Match.object_like(
+                        {
+                            "ContentSecurityPolicy": Match.object_like(
+                                {
+                                    "ContentSecurityPolicy": Match.string_like_regexp(
+                                        "script-src 'self'"
+                                    )
+                                }
+                            ),
+                            "StrictTransportSecurity": Match.object_like({"Override": True}),
+                            "ContentTypeOptions": {"Override": True},
+                            "FrameOptions": Match.object_like({"FrameOption": "DENY"}),
+                        }
+                    )
+                }
+            )
+        },
+    )
+
+
+def test_load_balancer_serves_only_requests_with_the_cloudfront_secret(demo):
+    demo["app"].has_resource_properties(
+        "AWS::ElasticLoadBalancingV2::Listener",
+        {
+            "DefaultActions": [
+                Match.object_like(
+                    {
+                        "Type": "fixed-response",
+                        "FixedResponseConfig": Match.object_like({"StatusCode": "403"}),
+                    }
+                )
+            ]
+        },
+    )
+    demo["app"].has_resource_properties(
+        "AWS::ElasticLoadBalancingV2::ListenerRule",
+        {
+            "Conditions": [
+                Match.object_like(
+                    {
+                        "Field": "http-header",
+                        "HttpHeaderConfig": Match.object_like(
+                            {"HttpHeaderName": "X-Origin-Verify"}
+                        ),
+                    }
+                )
+            ],
+            "Actions": [Match.object_like({"Type": "forward"})],
+        },
+    )
+    demo["frontend"].has_resource_properties(
+        "AWS::CloudFront::Distribution",
+        {
+            "DistributionConfig": Match.object_like(
+                {
+                    "Origins": Match.array_with(
+                        [
+                            Match.object_like(
+                                {
+                                    "OriginCustomHeaders": [
+                                        Match.object_like({"HeaderName": "X-Origin-Verify"})
+                                    ]
+                                }
+                            )
+                        ]
+                    )
+                }
+            )
+        },
+    )
+
+
+def test_image_tags_are_immutable_and_a_tag_is_required():
+    from dataclasses import replace
+
+    synth(DEMO)["app"].has_resource_properties(
+        "AWS::ECR::Repository", {"ImageTagMutability": "IMMUTABLE"}
+    )
+    with pytest.raises(ValueError, match="image_tag"):
+        build(cdk.App(), DEMO)
+    build(cdk.App(), replace(DEMO, bootstrap=True))  # bootstrap runs no task, so needs no tag
+
+
+def test_redis_requires_an_auth_token(demo):
+    demo["data"].has_resource_properties(
+        "AWS::ElastiCache::ReplicationGroup", {"AuthToken": Match.any_value()}
+    )
+
+
+def test_prod_has_waf_and_access_logs_and_demo_does_not(demo, prod):
+    prod["app"].resource_count_is("AWS::WAFv2::WebACL", 1)
+    prod["app"].resource_count_is("AWS::WAFv2::WebACLAssociation", 1)
+    prod["app"].has_resource_properties(
+        "AWS::ElasticLoadBalancingV2::LoadBalancer",
+        {
+            "LoadBalancerAttributes": Match.array_with(
+                [{"Key": "access_logs.s3.enabled", "Value": "true"}]
+            )
+        },
+    )
+    demo["app"].resource_count_is("AWS::WAFv2::WebACL", 0)

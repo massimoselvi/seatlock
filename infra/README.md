@@ -21,7 +21,7 @@ npx aws-cdk@2.1146.0 synth -c env=prod          # production-like
 npx aws-cdk@2.1146.0 diff -c env=prod           # needs AWS credentials
 ```
 
-Options (`-c key=value`): `env` (`demo` or `prod`), `alarm_email`, `image_tag`, `destroy_by` (a date, added as the `DestroyBy` tag).
+Options (`-c key=value`): `env` (`demo` or `prod`), `alarm_email`, `image_tag` (required, a git SHA; tags are immutable), `destroy_by` (a date, added as the `DestroyBy` tag).
 Every resource gets the tags `Project=seatlock`, `Env` and `ManagedBy=cdk`. List everything the project owns with the Resource Groups Tagging API. To filter Cost Explorer by `Project`, first activate the tag as a cost allocation tag in the billing console. It then takes up to a day to appear. In a dedicated account you can also filter by account.
 Demo and prod differ only in `seatlock_infra/config.py`.
 
@@ -31,3 +31,9 @@ Demo and prod differ only in `seatlock_infra/config.py`.
 - CloudFront still reaches the ALB over HTTP. Add TLS before real traffic.
 - The queue backlog alarm from [docs/slo.md](../docs/slo.md) is missing. Celery's queue length is not a CloudWatch metric, so it needs a small publisher.
 - The "oversold workshop" alarm needs a scheduled check against the database. Also missing.
+
+## Edge controls (ADR 0007)
+
+- CloudFront sends `X-Origin-Verify` and the ALB forwards only requests that carry it. The value is a Secrets Manager secret (`OriginVerifySecret`). Health checks go straight to the tasks and do not need it.
+- To rotate the secret, add a second header value to the ALB rule first, deploy, then change the secret, then drop the old value.
+- The first deploy of the secret and the Redis token uses CloudFormation dynamic references. Check in a throwaway account that CloudFront and ElastiCache accept them (see `docs/deploy.md`).
