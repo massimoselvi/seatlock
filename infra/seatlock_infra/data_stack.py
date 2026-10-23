@@ -40,6 +40,24 @@ class DataStack(Stack):
             ),
         )
 
+        # CloudFront sends this value in a header and the ALB forwards only requests that carry it.
+        # The CloudFront address list covers every CloudFront customer, so it is not enough alone.
+        self.origin_secret = secretsmanager.Secret(
+            self,
+            "OriginVerifySecret",
+            generate_secret_string=secretsmanager.SecretStringGenerator(
+                exclude_punctuation=True, password_length=40
+            ),
+        )
+        # Redis AUTH token. Letters and digits only, so it is safe inside a URL.
+        self.redis_secret = secretsmanager.Secret(
+            self,
+            "RedisAuthToken",
+            generate_secret_string=secretsmanager.SecretStringGenerator(
+                exclude_punctuation=True, password_length=48
+            ),
+        )
+
         self.database = rds.DatabaseInstance(
             self,
             "Postgres",
@@ -78,6 +96,7 @@ class DataStack(Stack):
             automatic_failover_enabled=config.cache_nodes > 1,
             at_rest_encryption_enabled=True,
             transit_encryption_enabled=True,
+            auth_token=self.redis_secret.secret_value.unsafe_unwrap(),
             cache_subnet_group_name=subnet_group.ref,
             security_group_ids=[network.cache_sg.security_group_id],
         )

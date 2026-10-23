@@ -35,6 +35,13 @@ def build(app: cdk.App, config: Config) -> Stacks:
     network = NetworkStack(app, f"{prefix}-Network", config=config, env=ENV)
     data = DataStack(app, f"{prefix}-Data", config=config, network=network, env=ENV)
     application = AppStack(app, f"{prefix}-App", config=config, network=network, data=data, env=ENV)
-    frontend = FrontendStack(app, f"{prefix}-Frontend", config=config, alb=application.alb, env=ENV)
+    frontend = FrontendStack(
+        app,
+        f"{prefix}-Frontend",
+        config=config,
+        alb=application.alb,
+        origin_secret=data.origin_secret,
+        env=ENV,
+    )
     _tag(app, config)
     return Stacks(network, data, application, frontend)

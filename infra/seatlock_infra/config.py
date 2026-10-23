@@ -14,6 +14,8 @@ class Config:
     protect_data: bool
     alarm_email: str | None = None
     bootstrap: bool = False
+    waf: bool = False
+    alb_logs: bool = False
 
     @property
     def web_desired(self) -> int:
@@ -48,6 +50,8 @@ PROD = Config(
     cache_nodes=2,
     db_backup_days=7,
     protect_data=True,
+    waf=True,
+    alb_logs=True,
 )
 
 ENVIRONMENTS = {"demo": DEMO, "prod": PROD}
