@@ -4,7 +4,7 @@
 |---|---|
 | Project | Seatlock |
 | Version | 1.0, issued 2026-10-23 |
-| State | Proposed. Effective when the owner approves it. |
+| State | Approved 2026-10-23 |
 | Sponsor, project manager, tech lead | Massimo Selvi |
 | Repository | `massimoselvi/seatlock` (public) |
 
@@ -142,4 +142,4 @@ With one person in every role, the controls that protect the project are the wri
 
 | Role | Name | Decision | Date |
 |------|------|----------|------|
-| Sponsor | Massimo Selvi | Pending | |
+| Sponsor | Massimo Selvi | Approved | 2026-10-23 |

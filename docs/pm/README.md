@@ -5,7 +5,7 @@ How Seatlock is run as a project. The structure follows the **PMBOK 7 performanc
 | Status | |
 |--------|--|
 | Version | 1.0, issued 2026-10-23 (project day 4) |
-| State | **Proposed baseline.** It becomes the baseline when the owner approves it in the table at the end of this page. |
+| State | **Approved baseline**, 2026-10-23 |
 | Owner | Massimo Selvi (sponsor, project manager and tech lead) |
 
 ## The documents
@@ -60,4 +60,4 @@ How Seatlock is run as a project. The structure follows the **PMBOK 7 performanc
 
 | Role | Name | Decision | Date |
 |------|------|----------|------|
-| Sponsor and project manager | Massimo Selvi | Pending | |
+| Sponsor and project manager | Massimo Selvi | Approved | 2026-10-23 |

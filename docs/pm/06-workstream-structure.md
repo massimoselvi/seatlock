@@ -95,9 +95,9 @@ Open issues of milestone v0.6, by workstream. "new" means no issue exists yet.
 | Technology & Cloud | A1 to A4 | #61, #62, #43, #44 |
 | Technology & Cloud | B1, B2 | #46, #45 |
 | Technology & Cloud | C1 to C6 | #47, #48, #58, #59, #60, #63 |
-| Technology & Cloud | D1, D2 | #57, new |
-| Technology & Cloud | E1 | new |
-| Product & Content | E2 | new |
+| Technology & Cloud | D1, D2 | #57, #85 |
+| Technology & Cloud | E1 | #86 |
+| Product & Content | E2 | #87 |
 
 <a id="capacity-rule"></a>
 

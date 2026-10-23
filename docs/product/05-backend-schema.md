@@ -146,7 +146,7 @@ These come from reading the schema against its rules. None is a bug that oversel
 | F6 | Registration rows are deleted with the user (`ON DELETE CASCADE`). | A deleted account removes its history and changes past counts. | Low | Acceptable for a demo. A real service would anonymize instead. |
 | F7 | Tokens do not expire. One token per user. | Stolen token works forever. | Medium | Issue #57. |
 
-Candidate issues: **F1** (new, D2), **F3** (covered by #46). F4 to F6 are recorded here and wait for a measurement or a decision.
+Candidate issues: **F1** (#85, D2), **F3** (covered by #46). F4 to F6 are recorded here and wait for a measurement or a decision.
 
 ## 6. API surface
 

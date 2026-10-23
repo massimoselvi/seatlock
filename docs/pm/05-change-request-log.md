@@ -165,5 +165,5 @@ All ten entries below were decided during the first week (2026-10-20 to 2026-10-
 
 | # | Proposal | Decision |
 |---|----------|----------|
-| 1 | Create a GitHub label `change-request` and add a "CR number" line to the pull request template. | Pending, in [decisions needed](reports/2026-W43.md#decisions-needed) |
+| 1 | Create a GitHub label `change-request` and add a "CR number" line to the pull request template. | Approved 2026-10-23. Label created. PR template line still to do. See [decisions needed](reports/2026-W43.md#decisions-needed) |
 | 2 | Mirror the log as GitHub issues only if the log grows past about 30 entries. | Not needed now |
