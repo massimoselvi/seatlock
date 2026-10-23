@@ -12,7 +12,9 @@ pytestmark = pytest.mark.django_db
 
 @pytest.fixture
 def workshop():
-    return Workshop.objects.create(title="Async Python", starts_at=timezone.now(), capacity=1)
+    return Workshop.objects.create(
+        title="Async Python", starts_at=timezone.now() + timezone.timedelta(days=1), capacity=1
+    )
 
 
 def client_for(username: str, *, staff: bool = False) -> APIClient:

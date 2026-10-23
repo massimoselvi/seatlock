@@ -27,7 +27,7 @@ class DjangoWorkshopRepository(WorkshopRepository):
             row = models.Workshop.objects.select_for_update().get(pk=workshop_id)
         except models.Workshop.DoesNotExist:
             raise WorkshopNotFound(workshop_id) from None
-        return Workshop(id=row.pk, title=row.title, capacity=row.capacity)
+        return Workshop(id=row.pk, title=row.title, capacity=row.capacity, starts_at=row.starts_at)
 
 
 class DjangoRegistrationRepository(RegistrationRepository):
@@ -45,6 +45,11 @@ class DjangoRegistrationRepository(RegistrationRepository):
     def count_confirmed(self, workshop_id: int) -> int:
         return models.Registration.objects.filter(
             workshop_id=workshop_id, status=RegistrationStatus.CONFIRMED
+        ).count()
+
+    def count_waitlisted(self, workshop_id: int) -> int:
+        return models.Registration.objects.filter(
+            workshop_id=workshop_id, status=RegistrationStatus.WAITLISTED
         ).count()
 
     def waitlist(self, workshop_id: int, limit: int) -> Sequence[Registration]:

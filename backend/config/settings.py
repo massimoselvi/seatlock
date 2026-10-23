@@ -80,7 +80,9 @@ STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": ["rest_framework.authentication.TokenAuthentication"],
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "interface.api.accounts.authentication.ExpiringTokenAuthentication"
+    ],
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticatedOrReadOnly"],
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 20,
@@ -98,8 +100,16 @@ REST_FRAMEWORK = {
         "registration": "10/min",
         "auth": "10/min",
         "login": "10/min",
+        "login_user": "10/min",
     },
 }
+
+# Production answers JSON only. The browsable API is for local development.
+if not DEBUG:
+    REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"] = ["rest_framework.renderers.JSONRenderer"]
+
+# API tokens stop working after this many hours. Signing in again issues a new one.
+AUTH_TOKEN_TTL_HOURS = env.int("AUTH_TOKEN_TTL_HOURS", default=24 * 7)
 
 # Redis backs the cache so throttle counters and cached lists are shared by all web workers.
 CACHES = {

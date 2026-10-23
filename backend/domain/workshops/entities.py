@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from enum import StrEnum
 
-from .exceptions import InvalidStatusTransition
+from .exceptions import InvalidStatusTransition, WorkshopClosed
 
 
 class RegistrationStatus(StrEnum):
@@ -58,13 +58,25 @@ class Workshop:
     id: int
     title: str
     capacity: int
+    starts_at: datetime | None = None
+
+    def ensure_open(self, now: datetime) -> None:
+        """Raise WorkshopClosed once the workshop has started. No start time means always open."""
+        if self.starts_at is not None and self.starts_at <= now:
+            raise WorkshopClosed(self.id)
 
     def free_seats(self, confirmed: int) -> int:
         return max(self.capacity - confirmed, 0)
 
-    def status_for_new_registration(self, confirmed: int) -> RegistrationStatus:
-        """A seat is confirmed while there is room, otherwise the user joins the waitlist."""
-        if self.free_seats(confirmed) > 0:
+    def status_for_new_registration(
+        self, confirmed: int, waitlisted: int = 0
+    ) -> RegistrationStatus:
+        """A seat is confirmed while there is room and nobody waits, otherwise the user queues.
+
+        A seat freed by a cancellation belongs to the oldest waiting user, so a newcomer must not
+        take it in the time before the promotion runs.
+        """
+        if waitlisted == 0 and self.free_seats(confirmed) > 0:
             return RegistrationStatus.CONFIRMED
         return RegistrationStatus.WAITLISTED
 

@@ -11,7 +11,9 @@ pytestmark = pytest.mark.django_db
 
 @pytest.fixture
 def workshop():
-    return Workshop.objects.create(title="Async Python", starts_at=timezone.now(), capacity=1)
+    return Workshop.objects.create(
+        title="Async Python", starts_at=timezone.now() + timezone.timedelta(days=1), capacity=1
+    )
 
 
 def client_for(username: str) -> APIClient:
@@ -70,3 +72,26 @@ def test_list_returns_only_my_registrations(workshop):
     bob.post(f"/api/workshops/{workshop.pk}/register/")
     results = ada.get("/api/registrations/").json()["results"]
     assert [r["status"] for r in results] == ["confirmed"]
+
+
+@pytest.mark.parametrize("path", ["/api/workshops/abc/register/", "/api/registrations/abc/cancel/"])
+def test_non_numeric_ids_are_404_not_500(path):
+    assert client_for("ada").post(path).status_code == 404
+
+
+def test_register_after_the_start_is_409():
+    past = Workshop.objects.create(
+        title="Old", starts_at=timezone.now() - timezone.timedelta(days=1), capacity=5
+    )
+    response = client_for("ada").post(f"/api/workshops/{past.pk}/register/")
+    assert response.status_code == 409
+    assert Registration.objects.count() == 0
+
+
+def test_newcomer_cannot_jump_the_waitlist(workshop):
+    ada, bob, cy = client_for("ada"), client_for("bob"), client_for("cy")
+    confirmed = ada.post(f"/api/workshops/{workshop.pk}/register/").json()
+    bob.post(f"/api/workshops/{workshop.pk}/register/")
+    # The promotion is queued but not run yet (on_commit callbacks are not executed here).
+    ada.post(f"/api/registrations/{confirmed['id']}/cancel/")
+    assert cy.post(f"/api/workshops/{workshop.pk}/register/").json()["status"] == "waitlisted"

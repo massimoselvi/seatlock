@@ -3,7 +3,7 @@
 import pytest
 
 from domain.workshops.entities import Registration, RegistrationStatus, Workshop
-from domain.workshops.exceptions import InvalidStatusTransition
+from domain.workshops.exceptions import InvalidStatusTransition, WorkshopClosed
 
 Status = RegistrationStatus
 
@@ -66,3 +66,23 @@ def test_promotion_fills_free_seats_oldest_first():
 def test_no_promotion_when_full():
     queue = [registration(Status.WAITLISTED)]
     assert workshop(capacity=1).select_for_promotion(confirmed=1, waitlist=queue) == []
+
+
+def test_newcomer_queues_while_anyone_waits_even_if_a_seat_is_free():
+    assert workshop(capacity=2).status_for_new_registration(1, waitlisted=1) == Status.WAITLISTED
+
+
+def test_workshop_closes_when_it_starts():
+    from datetime import UTC, datetime, timedelta
+
+    now = datetime(2026, 11, 1, 10, tzinfo=UTC)
+    open_ws = Workshop(id=1, title="t", capacity=1, starts_at=now + timedelta(minutes=1))
+    open_ws.ensure_open(now)
+    with pytest.raises(WorkshopClosed):
+        Workshop(id=1, title="t", capacity=1, starts_at=now).ensure_open(now)
+
+
+def test_workshop_without_start_time_is_always_open():
+    from datetime import UTC, datetime
+
+    workshop().ensure_open(datetime.now(UTC))

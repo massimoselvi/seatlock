@@ -153,3 +153,30 @@ def test_seat_counts_are_only_read_under_the_workshop_lock():
     first = world.uow.store.registrations[0]
     world.cancel.execute(user_id=first.user_id, registration_id=first.id)
     world.promote.execute(workshop_id=1)
+
+
+def test_newcomer_does_not_take_a_seat_freed_before_the_promotion_runs():
+    world = World(capacity=1)
+    first = world.sign_up(1)
+    assert world.sign_up(2).status == Status.WAITLISTED
+    world.cancel.execute(user_id=1, registration_id=first.id)  # promotion is only queued
+
+    assert world.sign_up(3).status == Status.WAITLISTED
+    world.promote.execute(workshop_id=1)
+    statuses = {r.user_id: r.status for r in world.uow.store.registrations}
+    assert statuses[2] == Status.CONFIRMED
+    assert statuses[3] == Status.WAITLISTED
+
+
+def test_cannot_register_once_the_workshop_has_started():
+    from datetime import UTC, datetime, timedelta
+
+    from domain.workshops.exceptions import WorkshopClosed
+
+    now = datetime(2026, 11, 1, 10, tzinfo=UTC)
+    world = World()
+    world.uow.store.workshops[1] = Workshop(id=1, title="t", capacity=1, starts_at=now)
+    world.register = RegisterForWorkshop(world.uow, world.cache, clock=lambda: now + timedelta(1))
+    with pytest.raises(WorkshopClosed):
+        world.sign_up(1)
+    assert world.uow.store.registrations == []

@@ -28,6 +28,9 @@ class RegistrationRepository(ABC):
     def count_confirmed(self, workshop_id: int) -> int: ...
 
     @abstractmethod
+    def count_waitlisted(self, workshop_id: int) -> int: ...
+
+    @abstractmethod
     def waitlist(self, workshop_id: int, limit: int) -> Sequence[Registration]:
         """Waitlisted registrations, oldest first, at most `limit`."""
 

@@ -2,11 +2,11 @@ from django.conf import settings
 from django.core.cache import cache
 from rest_framework import mixins, permissions, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.exceptions import NotFound
+from rest_framework.exceptions import APIException, NotFound
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 
-from domain.workshops.exceptions import RegistrationNotFound, WorkshopNotFound
+from domain.workshops.exceptions import RegistrationNotFound, WorkshopClosed, WorkshopNotFound
 from infrastructure import container
 from infrastructure.cache import workshop_list as workshop_cache
 from infrastructure.db import models, queries
@@ -14,10 +14,19 @@ from infrastructure.db import models, queries
 from .serializers import RegistrationResultSerializer, RegistrationSerializer, WorkshopSerializer
 
 MAX_CACHED_PAGE = 1000
+# Ids in the URL are digits only: /workshops/abc/ is a plain 404 and never reaches int().
+ID_REGEX = r"\d+"
+
+
+class WorkshopStarted(APIException):
+    status_code = status.HTTP_409_CONFLICT
+    default_detail = "This workshop has already started."
+    default_code = "workshop_started"
 
 
 class WorkshopViewSet(viewsets.ReadOnlyModelViewSet):
     throttle_scope = None  # per-action kwargs must exist as class attributes
+    lookup_value_regex = ID_REGEX
     serializer_class = WorkshopSerializer
     queryset = queries.workshops_with_seats()
 
@@ -49,11 +58,14 @@ class WorkshopViewSet(viewsets.ReadOnlyModelViewSet):
             )
         except WorkshopNotFound:
             raise NotFound("Workshop not found.") from None
+        except WorkshopClosed:
+            raise WorkshopStarted from None
         return Response(RegistrationResultSerializer(result).data, status=status.HTTP_200_OK)
 
 
 class RegistrationViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     throttle_scope = None
+    lookup_value_regex = ID_REGEX
     serializer_class = RegistrationSerializer
     permission_classes = [permissions.IsAuthenticated]
 

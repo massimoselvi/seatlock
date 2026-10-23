@@ -152,7 +152,9 @@ def make_workshop(label: str, capacity: int):
     from infrastructure.db.models import Workshop
 
     return Workshop.objects.create(
-        title=f"[{PREFIX}] {label}", starts_at=timezone.now(), capacity=capacity
+        title=f"[{PREFIX}] {label}",
+        starts_at=timezone.now() + timezone.timedelta(days=1),
+        capacity=capacity,
     )
 
 

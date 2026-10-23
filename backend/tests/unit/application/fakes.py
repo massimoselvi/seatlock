@@ -67,6 +67,13 @@ class FakeRegistrations(RegistrationRepository):
             for r in self.rows
         )
 
+    def count_waitlisted(self, workshop_id: int) -> int:
+        self._require_lock(workshop_id)
+        return sum(
+            r.workshop_id == workshop_id and r.status == RegistrationStatus.WAITLISTED
+            for r in self.rows
+        )
+
     def waitlist(self, workshop_id: int, limit: int) -> Sequence[Registration]:
         self._require_lock(workshop_id)
         waiting = [
