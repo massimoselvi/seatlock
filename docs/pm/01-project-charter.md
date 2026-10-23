@@ -23,10 +23,10 @@
 | # | Objective | Measure | Target | Status on 2026-10-23 |
 |---|-----------|---------|--------|----------------------|
 | O1 | Seats are never oversold | Confirmed seats after 200 simultaneous requests for 10 seats | Exactly 10, in every run | **Met.** 8 of 8 runs. The same test on code without the lock confirmed up to 24. |
-| O2 | The code is tested and the checks are green | Backend line coverage, and CI on every pull request | At least 95%, all checks pass | **Met.** 98% (1,150 statements). 76 backend, 40 frontend and 16 infra tests. |
+| O2 | The code is tested and the checks are green | Backend line coverage, and CI on every pull request | At least 95%, all checks pass | **Met.** 99% (528 statements). 88 backend, 41 frontend and 23 infra tests. |
 | O3 | The architecture is deployable | A real AWS deployment, verified, then destroyed | Done once, cost at most 10 USD | **Not met yet.** Blocked on the dry run ([#43](https://github.com/massimoselvi/seatlock/issues/43)). Planned by 2026-10-28. |
 | O4 | The service is hardened | Issues of milestone v0.6 closed | All 13 open issues and the 3 added items, by the baseline date | **In progress.** 1 of 14 issues closed. Baseline finish 2026-12-09. |
-| O5 | Decisions and structure are documented | ADRs for each hard-to-reverse decision, C4 model, runbooks | Every such decision has an ADR | **Met.** 6 ADRs, 23 C4 views, 3 runbooks, an SLO document. |
+| O5 | Decisions and structure are documented | ADRs for each hard-to-reverse decision, C4 model, runbooks | Every such decision has an ADR | **Met.** 7 ADRs, 23 C4 views, 3 runbooks, an SLO document. |
 
 The source code is **delivered on 2026-10-23** (milestone v1.0). At delivery O1, O2 and O5 are met. O3 and O4 are not, and are listed as known limits. They continue as the hardening release v0.6 after delivery. The project is **complete** when O1 to O5 are met and the [Implementation Plan](../product/06-implementation-plan.md) exit criteria for phase E hold. See [CR-011](05-change-request-log.md#cr-011).
 

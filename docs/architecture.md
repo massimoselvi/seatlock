@@ -524,7 +524,7 @@ The structure exists to make the right tests cheap.
 | `tests/api` | 29 | PostgreSQL (all but the health check) | HTTP contract: status codes, auth, throttling, cache. |
 | `tests/config` | 8 | Django settings; 2 also use the database | Production settings and the admin flag. |
 
-The first four groups run without a database, in about 0.1 s together (35 tests). The full suite takes about 17 s, almost all of it in the database tests.
+The first four groups run without a database, in about 0.1 s together (40 tests). The full suite takes about 20 s, almost all of it in the database tests.
 
 ```mermaid
 flowchart LR

@@ -89,12 +89,12 @@ Status: **Met** is verified by a test or a measurement. **Planned** names the is
 
 | ID | Gate | Status |
 |----|------|--------|
-| TR-Q1 | Backend: `ruff check`, `ruff format --check`, migrations check, pytest. | Met, 76 tests, 98% coverage |
-| TR-Q2 | Frontend: `pnpm run ci` runs eslint, type-check, knip, vitest and build. | Met, 40 tests |
-| TR-Q3 | Infra tests. | Met, 16 tests |
+| TR-Q1 | Backend: `ruff check`, `ruff format --check`, migrations check, pytest. | Met, 88 tests, 99% coverage |
+| TR-Q2 | Frontend: `pnpm run ci` runs eslint, type-check, knip, vitest and build. | Met, 41 tests |
+| TR-Q3 | Infra tests. | Met, 23 tests |
 | TR-Q4 | Load test in CI on changes to domain, application or infrastructure. | Met (`load-test.yml`) |
 | TR-Q5 | `main` changes only through a pull request with green checks. | Met |
-| TR-Q6 | Tests that need PostgreSQL run in Docker. Unit and architecture tests need none (35 tests, about 0.1 s). | Met |
+| TR-Q6 | Tests that need PostgreSQL run in Docker. Unit and architecture tests need none (40 tests, about 0.1 s). | Met |
 
 ## 8. Interface requirements
 

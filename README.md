@@ -10,7 +10,15 @@ Workshops and classes with limited seats - built so a seat can never be sold twi
 - **Database-level guarantees.** Check and partial unique constraints enforce positive capacity and one active registration per user per workshop, even if application code is bypassed.
 - **Waitlist with async promotion.** Cancelling a confirmed seat schedules a Celery task via `transaction.on_commit`, which promotes the oldest waitlisted person and emails them.
 - **Idempotent registration.** Retrying the same request returns the existing registration.
-- **Clean architecture around the seat rules.** The backend has four layers: domain, application, infrastructure and interface. Dependencies point inward. The seat rules are plain Python with no Django, so 35 tests run in about 0.1 s without a database, and a test fails the build on a forbidden import. The lock order, the after-commit side effects and the rollback behavior are tested with in-memory fakes. This was first an experiment (`exp/clean-arch-*`) and is now adopted: see [ADR 0005](docs/architecture/adr/0005-clean-architecture-experiment.md) for the evidence and the cost.
+- **Clean architecture around the seat rules.** The backend has four layers: domain, application, infrastructure and interface. Dependencies point inward. The seat rules are plain Python with no Django, so 40 tests run in about 0.1 s without a database, and a test fails the build on a forbidden import. The lock order, the after-commit side effects and the rollback behavior are tested with in-memory fakes. This was first an experiment (`exp/clean-arch-*`) and is now adopted: see [ADR 0005](docs/architecture/adr/0005-clean-architecture-experiment.md) for the evidence and the cost.
+
+## Screenshots
+
+The images come from the built frontend with a mocked API. They hold sample data only.
+
+| Workshops, signed in (light) | Workshops on a phone (dark) | Organizer dashboard on a phone |
+|---|---|---|
+| ![A member sees one confirmed seat, one almost full workshop and one waitlist](docs/product/img/workshops-member-light.png) | ![The same list in the dark theme on a phone](docs/product/img/workshops-member-dark-mobile.png) | ![Staff see seats taken, the waitlist size and who is registered](docs/product/img/organizer-dashboard-mobile.png) |
 
 ## Run it
 
@@ -70,7 +78,8 @@ To change a diagram, edit the DSL files in `docs/architecture/`, then redraw the
 - [Backend architecture](docs/architecture.md): layers, request flows, concurrency, data model and testing, with diagrams
 - [C4 architecture diagrams](docs/architecture/README.md): context, containers, components, request flows and four deployments, built with Structurizr (see [how to start it](#start-structurizr))
 - [Load test](docs/load-test.md): 200 simultaneous registrations for 10 seats, with a control run that removes the lock
-- [ADRs](docs/architecture/adr/): row locks (0001), tasks on commit (0002), AWS target (0003), CDK (0004), clean architecture (0005), frontend styling (0006)
+- [Security](docs/architecture/adr/0007-harden-the-edge-and-api-tokens.md): what the 2026-10-23 audit found, what was fixed and what is still open (PRs #90 and #91, issue #92)
+- [ADRs](docs/architecture/adr/): row locks (0001), tasks on commit (0002), AWS target (0003), CDK (0004), clean architecture (0005), frontend styling (0006), edge and token hardening (0007)
 - [Deploy and rollback](docs/deploy.md), [SLOs](docs/slo.md) and [runbooks](docs/runbooks/)
 - [Product and technical documents](docs/product/README.md): PRD, technical requirements, app flow, UX brief, backend schema, implementation plan
 - [Project management](docs/pm/README.md): charter, stakeholders, schedule baseline, weekly status reports, change log, workstreams

@@ -15,6 +15,8 @@ The claim of this project is that a seat is never sold twice. The concurrency te
 
 In short: 200 people press "register" at the same moment for 10 seats. With the lock, exactly 10 are confirmed and 190 are waitlisted, every time. Remove the lock and up to 24 people get a seat.
 
+After the audit fixes (PR #90) the load test ran in CI on both configurations, 4x1 and 4x8, and every check passed. See the [Load test workflow](https://github.com/massimoselvi/seatlock/actions/workflows/load-test.yml) for the run summaries.
+
 ## What it tests
 
 The script is [backend/scripts/load_test.py](../backend/scripts/load_test.py). It starts its own gunicorn, creates throwaway users and workshops, sends requests that all leave at the same moment, and then checks the database.
