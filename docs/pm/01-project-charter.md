@@ -16,7 +16,7 @@
 
 **Project.** Build Seatlock: a workshop booking system whose one promise is that **a seat is never sold twice**. Attendees register, join a waitlist when a workshop is full, and cancel. A freed seat goes to the oldest person waiting. Organizers see who registered.
 
-**Why this project exists.** It is a portfolio and practice project. Its value is the evidence it leaves: a hard concurrency problem solved and *proved*, a backend whose rules can be tested without a database, infrastructure written as code, and decisions recorded as ADRs. A reader should be able to check each claim in the repository.
+**Why this project exists.** It is a reference project. Its value is the evidence it leaves: a hard concurrency problem solved and *proved*, a backend whose rules can be tested without a database, infrastructure written as code, and decisions recorded as ADRs. A reader should be able to check each claim in the repository.
 
 ## 2. Objectives and success criteria
 
@@ -28,7 +28,7 @@
 | O4 | The service is hardened | Issues of milestone v0.6 closed | All 13 open issues and the 3 added items, by the baseline date | **In progress.** 1 of 14 issues closed. Baseline finish 2026-12-09. |
 | O5 | Decisions and structure are documented | ADRs for each hard-to-reverse decision, C4 model, runbooks | Every such decision has an ADR | **Met.** 6 ADRs, 23 C4 views, 3 runbooks, an SLO document. |
 
-The project is **complete** when O1 to O5 are met and the [Implementation Plan](../product/06-implementation-plan.md) exit criteria for phase E hold.
+The source code is **delivered on 2026-10-23** (milestone v1.0). At delivery O1, O2 and O5 are met. O3 and O4 are not, and are listed as known limits. They continue as the hardening release v0.6 after delivery. The project is **complete** when O1 to O5 are met and the [Implementation Plan](../product/06-implementation-plan.md) exit criteria for phase E hold. See [CR-011](05-change-request-log.md#cr-011).
 
 ## 3. Scope
 
@@ -78,7 +78,8 @@ The project is **complete** when O1 to O5 are met and the [Implementation Plan](
 | v0.3 Operations | 2026-10-22 | 2026-10-21 | 1 day early |
 | v0.4 Deploy | 2026-10-23 | 2026-10-21 | 2 days early |
 | v0.5 Security | none | 2026-10-21 | Added after the first review |
-| v0.6 Hardening, phase A to E | 2026-12-09 (baseline) | | Open. See the [schedule](03-estimates-and-schedule-baseline.md#4-schedule). |
+| **v1.0 Source delivery** | 2026-10-23 | 2026-10-23 | Delivered with known limits ([CR-011](05-change-request-log.md#cr-011)) |
+| v0.6 Hardening, phase A to E | 2026-12-09 (baseline) | | After delivery. See the [schedule](03-estimates-and-schedule-baseline.md#4-schedule). |
 
 ## 6. Budget
 

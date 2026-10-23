@@ -15,7 +15,7 @@ Power and interest are scored 1 (low) to 3 (high).
 | ID | Stakeholder | Interest in the project | What they expect | Power | Interest |
 |----|-------------|-------------------------|------------------|:-----:|:--------:|
 | S1 | **Project owner** (sponsor, project manager, tech lead) | Owns scope, schedule, cost and quality. | A project that shows sound engineering and is finished on the baseline. | 3 | 3 |
-| S2 | **Repository readers**: hiring managers, engineering peers, people studying the design | Judge the quality of the work from the repository alone. | Claims that can be checked. Clear structure. Honest limits. | 2 | 3 |
+| S2 | **Repository readers**: engineering peers, reviewers, people studying the design | Judge the quality of the work from the repository alone. | Claims that can be checked. Clear structure. Honest limits. | 2 | 3 |
 | S3 | **Workshop attendees** (a persona, in a demo) | Book a seat, join a waitlist, cancel. | It works, it is quick, a seat is never taken twice. | 1 | 2 |
 | S4 | **Workshop organizers** (a persona, in a demo) | See seats taken and who registered. | An accurate dashboard. A way to create workshops (not built yet). | 1 | 2 |
 | S5 | **Amazon Web Services** (provider) | Provides the cloud. Sets quotas, policies and prices. | Use within the terms and the account's guardrails. | 3 | 1 |
