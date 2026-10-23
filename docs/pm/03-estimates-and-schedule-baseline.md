@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | Version | 1.0, issued 2026-10-23 |
-| State | **Proposed baseline** for the remaining work. Approved when the owner signs the table at the end. |
+| State | **Approved baseline**, 2026-10-23 |
 | Scope | Milestone v0.6 Hardening and three added items. Everything before 2026-10-23 is reported as actuals. |
 | Capacity | 15 productive hours a week (assumption A1 in the [charter](01-project-charter.md#7-assumptions-constraints-dependencies)) |
 
@@ -58,9 +58,9 @@ Packages follow the [implementation plan](../product/06-implementation-plan.md).
 | C5 | ElastiCache Redis auth token | #60 | Technology | 2 | 3 | 6 | 3.3 | 0.7 | 2026-11-16 | 2026-11-17 |
 | C6 | ALB and CloudFront access logs | #63 | Technology | 2 | 3 | 5 | 3.2 | 0.5 | 2026-11-17 | 2026-11-18 |
 | D1 | Token expiry and one token per device, with an ADR | #57 | Technology | 6 | 10 | 20 | 11.0 | 2.3 | 2026-11-18 | 2026-11-24 |
-| D2 | CHECK constraint on registration status | new | Technology | 1 | 2 | 3 | 2.0 | 0.3 | 2026-11-24 | 2026-11-24 |
-| E1 | Sweep for lost promotions and emails | new | Technology | 4 | 8 | 16 | 8.7 | 2.0 | 2026-11-24 | 2026-11-27 |
-| E2 | Portfolio polish: screenshots, load test on AWS, demo notes | new | Product | 2 | 4 | 8 | 4.3 | 1.0 | 2026-11-27 | 2026-12-01 |
+| D2 | CHECK constraint on registration status | #85 | Technology | 1 | 2 | 3 | 2.0 | 0.3 | 2026-11-24 | 2026-11-24 |
+| E1 | Sweep for lost promotions and emails | #86 | Technology | 4 | 8 | 16 | 8.7 | 2.0 | 2026-11-24 | 2026-11-27 |
+| E2 | Portfolio polish: screenshots, load test on AWS, demo notes | #87 | Product | 2 | 4 | 8 | 4.3 | 1.0 | 2026-11-27 | 2026-12-01 |
 | | **Total** | | | | | | **78.2** | **4.7** | 2026-10-26 | 2026-12-01 |
 
 Totals: **78.2 h** expected. P80 (E + 0.84 SD) is 82.2 h. The 20% reserve adds 15.7 h, for **93.9 h** with reserve.
@@ -102,10 +102,10 @@ gantt
     #63 ALB and CloudFront access logs :c6, 2026-11-17, 2026-11-18
     section D. Auth and data integrity
     #57 Token expiry and one token per device, wit :d1, 2026-11-18, 2026-11-24
-    new CHECK constraint on registration status :d2, 2026-11-24, 2026-11-24
+    #85 CHECK constraint on registration status :d2, 2026-11-24, 2026-11-24
     section E. Resilience and portfolio polish
-    new Sweep for lost promotions and emails :e1, 2026-11-24, 2026-11-27
-    new Portfolio polish - screenshots, load test o :e2, 2026-11-27, 2026-12-01
+    #86 Sweep for lost promotions and emails :e1, 2026-11-24, 2026-11-27
+    #87 Portfolio polish - screenshots, load test o :e2, 2026-11-27, 2026-12-01
 ```
 
 ### Milestones
@@ -185,4 +185,4 @@ See the [charter risk table](01-project-charter.md#8-risks). The ones that move 
 
 | Role | Name | Decision | Date |
 |------|------|----------|------|
-| Sponsor and project manager | Massimo Selvi | Pending | |
+| Sponsor and project manager | Massimo Selvi | Approved | 2026-10-23 |
