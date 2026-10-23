@@ -22,4 +22,4 @@ Enqueue every task with `transaction.on_commit`. Tasks are idempotent: running o
 ## Consequences
 
 - A task is sent only for committed changes.
-- If the process crashes between the commit and the send, the promotion is lost. A periodic sweep task can repair it later.
+- If the process crashes between the commit and the send, the promotion is lost. The `sweep_waitlists` task repairs it: it runs every 5 minutes and queues a promotion for each workshop with a free seat and a waitlist (added 2026-10-23). A lost promotion therefore delays a waiting user by at most one interval.

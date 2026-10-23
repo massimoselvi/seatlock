@@ -4,6 +4,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/). Versions follow 
 
 ## [Unreleased]
 
+### Added
+
+- `sweep_waitlists` task: every 5 minutes it queues a promotion for each workshop with a free seat and a waitlist, so a promotion lost between commit and enqueue is repaired (ADR 0005 gap 4)
+- The worker runs the scheduler (`celery worker -B`); `WAITLIST_SWEEP_SECONDS` sets the interval
+
 ### Security
 
 - API 403 and 404 answers are no longer replaced by the single-page app in CloudFront (ADR 0007)

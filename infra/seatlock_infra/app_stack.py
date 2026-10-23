@@ -25,7 +25,9 @@ WEB_COMMAND = (
     "exec gunicorn config.wsgi --bind 0.0.0.0:8000 --workers 2 --access-logfile - "
     "--no-control-socket"
 )
-WORKER_COMMAND = "exec celery -A config worker --loglevel=info"
+# -B runs the scheduler (waitlist sweep) inside the worker. There is one worker task. A second
+# one during a rolling deploy only runs the same sweep twice, which is safe.
+WORKER_COMMAND = "exec celery -A config worker -B -s /tmp/celerybeat-schedule --loglevel=info"
 
 
 class AppStack(Stack):

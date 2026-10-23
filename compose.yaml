@@ -42,7 +42,8 @@ services:
 
   worker:
     <<: *backend
-    command: celery -A config worker --loglevel=info
+    # -B runs the scheduler inside the worker (waitlist sweep). The schedule file goes to /tmp.
+    command: celery -A config worker -B -s /tmp/celerybeat-schedule --loglevel=info
 
   frontend:
     image: node:22-alpine

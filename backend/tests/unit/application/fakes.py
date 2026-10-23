@@ -35,6 +35,19 @@ class FakeWorkshops(WorkshopRepository):
         self.uow.locked.add(workshop_id)
         return workshop
 
+    def with_waiting_and_free_seats(self) -> list[int]:
+        rows = self.uow.store.registrations
+
+        def count(workshop_id: int, status: RegistrationStatus) -> int:
+            return sum(r.workshop_id == workshop_id and r.status == status for r in rows)
+
+        return [
+            w.id
+            for w in self.uow.store.workshops.values()
+            if count(w.id, RegistrationStatus.WAITLISTED) > 0
+            and count(w.id, RegistrationStatus.CONFIRMED) < w.capacity
+        ]
+
 
 class FakeRegistrations(RegistrationRepository):
     def __init__(self, uow: "FakeUnitOfWork") -> None:

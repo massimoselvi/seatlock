@@ -29,3 +29,11 @@ def send_promotion_email(to: str, workshop_title: str) -> None:
         from_email=None,
         recipient_list=[to],
     )
+
+
+@shared_task(name="workshops.tasks.sweep_waitlists")
+def sweep_waitlists() -> int:
+    """Runs on a schedule (CELERY_BEAT_SCHEDULE). No retry: the next run is the retry."""
+    from infrastructure import container
+
+    return container.sweep_waitlists().execute()

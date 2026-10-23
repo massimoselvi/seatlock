@@ -83,6 +83,26 @@ class CancelRegistration:
             return RegistrationResult.from_entity(registration, workshop.title)
 
 
+class SweepWaitlists:
+    """Repair for a lost promotion: queue one for each workshop with a free seat and a waitlist.
+
+    A crash between the commit of a cancellation and the enqueue loses the promotion task. This
+    runs on a schedule and finds those workshops. It changes no seat itself. Each promotion still
+    locks the workshop and counts again, so a sweep that races a normal promotion does no harm.
+    """
+
+    def __init__(self, uow: UnitOfWork, promotion_queue: WaitlistPromotionQueue) -> None:
+        self.uow = uow
+        self.promotion_queue = promotion_queue
+
+    def execute(self) -> int:
+        with self.uow:
+            workshop_ids = list(self.uow.workshops.with_waiting_and_free_seats())
+        for workshop_id in workshop_ids:
+            self.promotion_queue.enqueue(workshop_id)
+        return len(workshop_ids)
+
+
 class PromoteWaitlist:
     """Fill free seats from the waitlist, oldest first, then tell the people promoted."""
 

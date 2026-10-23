@@ -629,7 +629,7 @@ docker compose run --rm web python manage.py makemigrations workshops
 | **Django admin** | `infrastructure/db/admin.py` lets staff edit registrations directly. This bypasses the use cases and the lock. Treat admin edits of seats as a data fix, reviewed by a second person ([runbook](runbooks/seats-oversold.md)). |
 | **Status enum is still two lists** | The domain `RegistrationStatus` and the ORM `Registration.Status` are separate. `tests/test_status_mapping.py` fails the build if they drift apart. |
 | **Email can be lost** | It is sent after commit. A worker crash in between loses the email. The seat stays confirmed. |
-| **Task can be lost** | A crash between commit and enqueue loses the promotion ([ADR 0002](architecture/adr/0002-enqueue-celery-tasks-on-commit.md)). Re-run the recovery in the [queue backlog runbook](runbooks/queue-backlog.md). |
+| **Task can be lost, then repaired** | A crash between commit and enqueue loses the promotion ([ADR 0002](architecture/adr/0002-enqueue-celery-tasks-on-commit.md)). The `sweep_waitlists` task runs every 5 minutes and queues it again, so the delay is bounded. The [queue backlog runbook](runbooks/queue-backlog.md) has the manual command. |
 | **Architecture test sees imports only** | It cannot detect a business rule written in a view. Code review and `CODEOWNERS` cover that. |
 
 The full list with follow-ups is in [ADR 0005](architecture/adr/0005-clean-architecture-experiment.md#known-gaps-and-follow-ups).

@@ -44,5 +44,5 @@ Exit criteria: `cdk synth` passes in CI. The architecture is documented in ADRs.
 | Risk | Mitigation |
 |------|------------|
 | Overselling under concurrent requests | Row lock with `select_for_update()`, database constraints, concurrency test |
-| Lost waitlist promotion | Task enqueued with `transaction.on_commit`, idempotent task |
+| Lost waitlist promotion | Task enqueued with `transaction.on_commit`, idempotent task, and a sweep every 5 minutes that repairs a lost one |
 | Cost of idle cloud resources | Cost estimate in ADR, small instance sizes |

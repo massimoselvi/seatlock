@@ -2,7 +2,12 @@
 
 import pytest
 
-from application.workshops.services import CancelRegistration, PromoteWaitlist, RegisterForWorkshop
+from application.workshops.services import (
+    CancelRegistration,
+    PromoteWaitlist,
+    RegisterForWorkshop,
+    SweepWaitlists,
+)
 from domain.workshops.entities import RegistrationStatus, Workshop
 from domain.workshops.exceptions import RegistrationNotFound, WorkshopNotFound
 
@@ -23,6 +28,7 @@ class World:
         self.register = RegisterForWorkshop(self.uow, self.cache)
         self.cancel = CancelRegistration(self.uow, self.cache, self.queue)
         self.promote = PromoteWaitlist(self.uow, self.cache, self.notifier)
+        self.sweep = SweepWaitlists(self.uow, self.queue)
 
     def sign_up(self, user_id: int):
         return self.register.execute(user_id=user_id, workshop_id=1)
@@ -180,3 +186,37 @@ def test_cannot_register_once_the_workshop_has_started():
     with pytest.raises(WorkshopClosed):
         world.sign_up(1)
     assert world.uow.store.registrations == []
+
+
+def test_sweep_finds_a_workshop_whose_promotion_was_lost():
+    world = World(capacity=1)
+    first = world.sign_up(1)
+    world.sign_up(2)
+    world.cancel.execute(user_id=1, registration_id=first.id)
+    world.queue.enqueued.clear()  # the process died before the enqueue: the task is gone
+
+    assert world.sweep.execute() == 1
+    assert world.queue.enqueued == [1]
+
+    world.promote.execute(workshop_id=1)
+    assert world.sweep.execute() == 0  # nothing left to repair
+
+
+def test_sweep_ignores_full_workshops_and_free_seats_with_no_waitlist():
+    world = World(capacity=2)
+    world.sign_up(1)  # one free seat, nobody waiting
+    assert world.sweep.execute() == 0
+    world.sign_up(2)
+    world.sign_up(3)  # full, one waiting
+    assert world.sweep.execute() == 0
+    assert world.queue.enqueued == []
+
+
+def test_sweep_changes_no_seat():
+    world = World(capacity=1)
+    first = world.sign_up(1)
+    world.sign_up(2)
+    world.cancel.execute(user_id=1, registration_id=first.id)
+    before = [(r.user_id, r.status) for r in world.uow.store.registrations]
+    world.sweep.execute()
+    assert [(r.user_id, r.status) for r in world.uow.store.registrations] == before

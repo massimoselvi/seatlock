@@ -2,6 +2,8 @@
 
 from collections.abc import Sequence
 
+from django.db.models import Count, F, Q
+
 from application.workshops.interfaces import RegistrationRepository, WorkshopRepository
 from domain.workshops.entities import ACTIVE_STATUSES, Registration, RegistrationStatus, Workshop
 from domain.workshops.exceptions import RegistrationNotFound, WorkshopNotFound
@@ -28,6 +30,13 @@ class DjangoWorkshopRepository(WorkshopRepository):
         except models.Workshop.DoesNotExist:
             raise WorkshopNotFound(workshop_id) from None
         return Workshop(id=row.pk, title=row.title, capacity=row.capacity, starts_at=row.starts_at)
+
+    def with_waiting_and_free_seats(self) -> Sequence[int]:
+        rows = models.Workshop.objects.annotate(
+            confirmed=Count("registrations", filter=Q(registrations__status="confirmed")),
+            waiting=Count("registrations", filter=Q(registrations__status="waitlisted")),
+        ).filter(waiting__gt=0, confirmed__lt=F("capacity"))
+        return list(rows.order_by("pk").values_list("pk", flat=True))
 
 
 class DjangoRegistrationRepository(RegistrationRepository):

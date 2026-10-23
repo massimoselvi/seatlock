@@ -4,7 +4,12 @@ Each call returns a fresh use case with its own unit of work, so nothing is shar
 requests. Views and Celery tasks call these factories and never name a concrete class.
 """
 
-from application.workshops.services import CancelRegistration, PromoteWaitlist, RegisterForWorkshop
+from application.workshops.services import (
+    CancelRegistration,
+    PromoteWaitlist,
+    RegisterForWorkshop,
+    SweepWaitlists,
+)
 
 from .cache.workshop_list import DjangoWorkshopListCache
 from .db.unit_of_work import DjangoUnitOfWork
@@ -24,3 +29,7 @@ def cancel_registration() -> CancelRegistration:
 
 def promote_waitlist() -> PromoteWaitlist:
     return PromoteWaitlist(DjangoUnitOfWork(), DjangoWorkshopListCache(), EmailPromotionNotifier())
+
+
+def sweep_waitlists() -> SweepWaitlists:
+    return SweepWaitlists(DjangoUnitOfWork(), CeleryWaitlistPromotionQueue())
