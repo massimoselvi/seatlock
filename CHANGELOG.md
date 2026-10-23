@@ -11,7 +11,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/). Versions follow 
 - CSP, HSTS and other security headers on the site and the API
 - API tokens expire (`AUTH_TOKEN_TTL_HOURS`, default 168 hours); sign-in is limited per username too
 - Immutable ECR tags; `image_tag` is required
-- Production: WAF managed rules, ALB access logs, Redis AUTH token, `sslmode=require` for PostgreSQL
+- Production: WAF managed rules (count mode first), ALB access logs, Redis AUTH token, `sslmode=require` for PostgreSQL
 - Production answers JSON only; compose publishes PostgreSQL on 127.0.0.1 only
 
 ### Fixed

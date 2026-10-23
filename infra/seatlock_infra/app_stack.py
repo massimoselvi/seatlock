@@ -170,13 +170,22 @@ class AppStack(Stack):
         self.alb.log_access_logs(bucket)
 
     def _waf(self):
-        """AWS managed rule groups on the ALB. Rate limits stay in the app (see ADR 0007)."""
+        """AWS managed rule groups on the ALB. Rate limits stay in the app (see ADR 0007).
+
+        The ALB sees CloudFront addresses, not viewer addresses, so the IP reputation group is
+        left out. Both groups inspect request content. They start in count mode.
+        """
+        override = (
+            wafv2.CfnWebACL.OverrideActionProperty(none={})
+            if self.config.waf_block
+            else wafv2.CfnWebACL.OverrideActionProperty(count={})
+        )
 
         def group(priority, name):
             return wafv2.CfnWebACL.RuleProperty(
                 name=name,
                 priority=priority,
-                override_action=wafv2.CfnWebACL.OverrideActionProperty(none={}),
+                override_action=override,
                 statement=wafv2.CfnWebACL.StatementProperty(
                     managed_rule_group_statement=wafv2.CfnWebACL.ManagedRuleGroupStatementProperty(
                         vendor_name="AWS", name=name
@@ -192,9 +201,8 @@ class AppStack(Stack):
             default_action=wafv2.CfnWebACL.DefaultActionProperty(allow={}),
             visibility_config=self._waf_visibility("seatlock"),
             rules=[
-                group(1, "AWSManagedRulesAmazonIpReputationList"),
-                group(2, "AWSManagedRulesKnownBadInputsRuleSet"),
-                group(3, "AWSManagedRulesCommonRuleSet"),
+                group(1, "AWSManagedRulesKnownBadInputsRuleSet"),
+                group(2, "AWSManagedRulesCommonRuleSet"),
             ],
         )
         wafv2.CfnWebACLAssociation(

@@ -335,3 +335,16 @@ def test_prod_has_waf_and_access_logs_and_demo_does_not(demo, prod):
         },
     )
     demo["app"].resource_count_is("AWS::WAFv2::WebACL", 0)
+
+
+def test_waf_counts_first_and_blocks_only_when_asked(prod):
+    from dataclasses import replace
+
+    def overrides(template):
+        acl = template.find_resources("AWS::WAFv2::WebACL")
+        ((_, resource),) = acl.items()
+        return [r["OverrideAction"] for r in resource["Properties"]["Rules"]]
+
+    assert overrides(prod["app"]) == [{"Count": {}}, {"Count": {}}]
+    blocking = synth(replace(PROD, waf_block=True))["app"]
+    assert overrides(blocking) == [{"None": {}}, {"None": {}}]
