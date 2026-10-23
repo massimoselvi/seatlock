@@ -72,6 +72,8 @@ To change a diagram, edit the DSL files in `docs/architecture/`, then redraw the
 - [Load test](docs/load-test.md): 200 simultaneous registrations for 10 seats, with a control run that removes the lock
 - [ADRs](docs/architecture/adr/): row locks (0001), tasks on commit (0002), AWS target (0003), CDK (0004), clean architecture (0005), frontend styling (0006)
 - [Deploy and rollback](docs/deploy.md), [SLOs](docs/slo.md) and [runbooks](docs/runbooks/)
+- [Product and technical documents](docs/product/README.md): PRD, technical requirements, app flow, UX brief, backend schema, implementation plan
+- [Project management](docs/pm/README.md): charter, stakeholders, schedule baseline, weekly status reports, change log, workstreams
 
 ## Rejected alternative
 
