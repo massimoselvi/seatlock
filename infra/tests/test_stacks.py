@@ -166,6 +166,7 @@ def test_outputs_needed_by_the_deploy_guide_exist(demo):
         "network": {"AppSecurityGroupId", "TaskSubnetIds"},
         "app": {
             "RepositoryUri",
+            "AlbDnsName",
             "ClusterName",
             "WebServiceName",
             "WorkerServiceName",

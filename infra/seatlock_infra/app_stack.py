@@ -154,6 +154,7 @@ class AppStack(Stack):
 
         # Used by docs/deploy.md so the release steps need no console lookups.
         CfnOutput(self, "RepositoryUri", value=self.repository.repository_uri)
+        CfnOutput(self, "AlbDnsName", value=self.alb.load_balancer_dns_name)
         CfnOutput(self, "ClusterName", value=cluster.cluster_name)
         CfnOutput(self, "WebServiceName", value=self.web_service.service_name)
         CfnOutput(self, "WorkerServiceName", value=worker_service.service_name)
