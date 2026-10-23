@@ -44,7 +44,7 @@ Status: **Met** is verified by a test or a measurement. **Planned** names the is
 | TR-C5 | The real database lock is proved by a concurrent test and a load test. | Met | `test_concurrent_registrations_never_oversell`, `backend/scripts/load_test.py` |
 | TR-C6 | The ORM app label stays `workshops` and the task name stays `workshops.tasks.promote_waitlist`. | Met | [Architecture guide](../architecture.md) |
 | TR-C7 | The database constrains `status` to the three known values. | **Gap**, planned D2 | [Schema findings](05-backend-schema.md#5-findings) |
-| TR-C8 | A lost email or a lost queued promotion is recovered by a sweep. | **Gap**, planned E1 | ADR 0005 gaps 3 and 4 |
+| TR-C8 | A lost email or a lost queued promotion is recovered. | **Met for promotions, partly for email.** `sweep_waitlists` repairs a lost promotion every 5 minutes. Each email is its own retrying task. An email whose enqueue fails after commit is still lost. | ADR 0005 gaps 3 and 4 |
 
 ## 4. Performance and capacity
 
