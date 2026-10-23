@@ -123,6 +123,13 @@ WORKSHOP_LIST_CACHE_SECONDS = env.int("WORKSHOP_LIST_CACHE_SECONDS", default=30)
 CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="redis://localhost:6379/0")
 CELERY_RESULT_BACKEND = CELERY_BROKER_URL
 CELERY_TASK_ALWAYS_EAGER = env.bool("CELERY_TASK_ALWAYS_EAGER", default=False)
+# Repairs promotions lost between a commit and the enqueue (ADR 0002). Safe to run twice.
+CELERY_BEAT_SCHEDULE = {
+    "sweep-waitlists": {
+        "task": "workshops.tasks.sweep_waitlists",
+        "schedule": env.int("WAITLIST_SWEEP_SECONDS", default=300),
+    }
+}
 
 EMAIL_BACKEND = env("EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend")
 DEFAULT_FROM_EMAIL = "Seatlock <noreply@seatlock.local>"

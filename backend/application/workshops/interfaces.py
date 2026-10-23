@@ -19,6 +19,14 @@ class WorkshopRepository(ABC):
         taking the last seat together. Raises WorkshopNotFound.
         """
 
+    @abstractmethod
+    def with_waiting_and_free_seats(self) -> Sequence[int]:
+        """Ids of workshops that have a waitlist and a free seat.
+
+        A hint read, taken without the lock. It decides where to look, never what to change:
+        the promotion locks the workshop and counts again.
+        """
+
 
 class RegistrationRepository(ABC):
     @abstractmethod

@@ -130,7 +130,7 @@ These are real and not yet fixed.
 1. **Fixed (2026-10-22): no drift test for the status enum.** The domain `RegistrationStatus` and the ORM `Registration.Status` are still two lists, because the domain cannot import Django. `tests/test_status_mapping.py` now fails the build if they differ. It needs no database. With a status added only to the model, two of its three tests fail.
 2. **Fixed (2026-10-22): `seats_left` was computed twice.** `WorkshopSerializer.get_seats_left` now calls `Workshop.free_seats` in the domain.
 3. **A promotion email can be lost.** Email is sent after commit, outside the transaction. A worker crash between the commit and the send loses the email. The seat is still confirmed.
-4. **A queued promotion can be lost.** Unchanged from ADR 0002: a crash between commit and enqueue loses the task. A periodic sweep would close the gap.
+4. **Fixed (2026-10-23): a queued promotion could be lost.** A crash between commit and enqueue lost the task (ADR 0002). The `SweepWaitlists` use case now runs every 5 minutes (Celery beat, `WAITLIST_SWEEP_SECONDS`). It queues a promotion for each workshop that has a free seat and a waitlist. The test `tests/api/test_waitlist_sweep.py` simulates the crash. Until the sweep runs, a newcomer still queues behind the waitlist, so nobody jumps the line.
 5. **The architecture test covers imports only.** It cannot see a business rule that sits in a view. Review and `CODEOWNERS` cover that.
 
 ## Alternatives considered

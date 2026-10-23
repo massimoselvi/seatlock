@@ -33,4 +33,4 @@ for w in Workshop.objects.all():
 
 ## 5. Follow up
 
-See [ADR 0002](../architecture/adr/0002-enqueue-celery-tasks-on-commit.md). A task can be lost if the process dies between commit and send. A periodic sweep that runs the loop above removes that gap.
+See [ADR 0002](../architecture/adr/0002-enqueue-celery-tasks-on-commit.md). A task can be lost if the process dies between commit and send. The `sweep_waitlists` task (every 5 minutes, started by `celery worker -B`) repairs that. If waiting users stay waitlisted for more than one interval with free seats, the scheduler is not running: check that the worker task is up and that its log has `Scheduler: Sending due task sweep-waitlists`. Then run the loop above by hand.
