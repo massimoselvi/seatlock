@@ -42,10 +42,14 @@ The load balancer accepts traffic only from CloudFront. Use the CloudFront URL (
 After the first deploy, check the edge controls (ADR 0007):
 
 ```bash
-curl -si "http://$ALB_DNS/api/health/" | head -1          # 403: no secret header
-curl -si "$SITE/api/workshops/999999/register/" -X POST | head -1   # 401 or 404, never 200
+ALB_DNS=$(out Seatlock-$ENVNAME-App AlbDnsName)
+SITE=$(out Seatlock-$ENVNAME-Frontend SiteUrl)
+curl -m 5 -s -o /dev/null "http://$ALB_DNS/api/health/"; echo "exit $?"   # 28: times out, the security group allows only CloudFront
+curl -si "$SITE/api/workshops/999999/register/" -X POST | head -1       # 401 or 404, never 200
 curl -sI "$SITE/" | grep -i 'content-security-policy\|strict-transport'
 ```
+
+The first check cannot return the 403 of the ALB default action: the security group drops the request first. That 403 (a request from CloudFront without the secret header) is covered by a template test, and a live check needs a second CloudFront distribution.
 
 Then ship a release (next section) and finish with a normal deploy, without `bootstrap`, to start the tasks.
 
